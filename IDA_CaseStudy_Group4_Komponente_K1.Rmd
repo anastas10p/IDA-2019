@@ -1,0 +1,173 @@
+---
+title: "IDA_CaseStudy_Group4"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+library(readr)
+library(tidyverse)
+library(dplyr)
+```
+
+Read data sets
+Id_Karosserie,Herstellernumer, Werksnummer,Produktionsdatum, Fehlerhaft
+```{r pressure, echo=FALSE}
+#Read
+start_time <- Sys.time()
+Komponente_K1BE1 <- read_csv("Data/Komponente_K1BE1.csv", 
+                              col_types = cols( "X1" = col_skip(),
+                                                "X1_1" = col_skip(),
+                                                "ID_Motor" = col_character(),
+                                                "Herstellernummer" = col_factor(),
+                                                "Werksnummer" = col_factor(),
+                                                "Fehlerhaft" = col_logical(),
+                                                "Fehlerhaft_Datum" = col_skip(),
+                                                "Fehlerhaft_Fahrleistung" = col_skip(),
+                                                "Produktionsdatum_Origin_01011970" = col_integer(),
+                                                "origin" = col_datetime(format = "%d-%m-%Y") 
+                                              ),
+                             n_max = 120000
+                             )
+end_time <- Sys.time()
+end_time - start_time
+
+#Rename
+Komponente_K1BE1 <- rename(Komponente_K1BE1, Produktionsdatum = Produktionsdatum_Origin_01011970)
+#Calculate date
+Komponente_K1BE1$Produktionsdatum <- as.Date(Komponente_K1BE1$Produktionsdatum, origin = Komponente_K1BE1$origin)
+
+#Drop colum and change order with select
+Komponente_K1BE1 <- select(Komponente_K1BE1, "ID_Motor", "Herstellernummer", "Werksnummer", "Produktionsdatum", "Fehlerhaft")
+
+```
+
+2nd Komponente
+```{r}
+#Read
+Komponente_K1BE2 <- read_csv2("Data/Komponente_K1BE2.csv", 
+                              col_types = cols( "X1" = col_skip(),
+                                                "X1_1" = col_skip(),
+                                                "ID_Motor" = col_character(),
+                                                "Herstellernummer" = col_factor(),
+                                                "Werksnummer" = col_factor(),
+                                                "Fehlerhaft" = col_logical(),
+                                                "Fehlerhaft_Datum" = col_skip(),
+                                                "Fehlerhaft_Fahrleistung" = col_skip(),
+                                                "Produktionsdatum_Origin_01011970" = col_integer(),
+                                                "origin" = col_datetime(format = "%d-%m-%Y") 
+                                              ), 
+                              n_max = 10
+                              )
+#Rename
+Komponente_K1BE2 <- rename(Komponente_K1BE2, Produktionsdatum = Produktionsdatum_Origin_01011970)
+
+#Change date
+Komponente_K1BE2$Produktionsdatum <- as.Date(Komponente_K1BE2$Produktionsdatum, origin = Komponente_K1BE2$origin)
+
+#Drop colum
+Komponente_K1BE2 <- select(Komponente_K1BE2, "ID_Motor", "Herstellernummer", "Werksnummer", "Produktionsdatum", "Fehlerhaft")
+```
+3rd Komponente
+```{r}
+#Chech with summary() and str() that the columns were empty and could be deleted/not loaded
+Komponente_K1DI1 <-  read_csv("Data/Komponente_K1DI1.csv", 
+                             col_types = cols(  "ID_Motor.x" = col_character(),
+                                                "Produktionsdatum.x" = col_datetime(format = "%Y-%m-%d"),
+                                                "Herstellernummer.x" = col_factor(),
+                                                "Werksnummer.x" = col_factor(),
+                                                "Fehlerhaft.x" = col_logical(),
+                                                "Fehlerhaft.y" = col_logical()
+                                              ), n_max = 30)[,c(3:7,14)]
+
+
+Komponente_K1DI1 <- Komponente_K1DI1 %>%                        
+                        mutate(Fehlerhaft = ifelse(Fehlerhaft.x%in% c(1)||Fehlerhaft.y%in%c(1),TRUE,FALSE)) %>%
+                        rename(ID_Motor = ID_Motor.x, Produktionsdatum = Produktionsdatum.x, 
+                                                 Herstellernummer = Herstellernummer.x, Werksnummer = Werksnummer.x) %>%
+                        select("ID_Motor", "Herstellernummer", "Werksnummer", "Produktionsdatum", "Fehlerhaft")
+  
+  
+
+# #Fehlerhaftspalte wird gemerged 
+# Komponente_K1DI1 <- Komponente_K1DI1 %>% mutate(Fehlerhaft = ifelse(Fehlerhaft.x%in% c(1)||Fehlerhaft.y%in%c(1),1,0)) %>%
+#                                          rename(ID_Motor = ID_Motor.x, Produktionsdatum = Produktionsdatum.x, 
+#                                                  Herstellernummer = Herstellernummer.x, Werksnummer = Werksnummer.x) %>%
+#                                          select("ID_Motor", "Herstellernummer", "Werksnummer", "Produktionsdatum", "Fehlerhaft")
+
+```
+
+
+4th Component (approach with new file creation) 
+CHANGE HEADER IN FILE BY ADDING "X1_1" !!!!
+```{r}
+#Read file in order to create new file arranged as list
+Komponente_K1DI2 <- read_delim("Data/Komponente_K1DI2.txt", delim =  "\t", col_names = FALSE)
+Komponente_K1DI2 <- data.frame(t(Komponente_K1DI2))
+
+
+#Research how to write text file without delim
+write_delim(Komponente_K1DI2, "Data/Komponente_K1DI2_List.txt", quote_escape = FALSE)
+
+
+Komponente_K1DI2 <- read_delim("Data/Komponente_K1DI2_List.txt", delim =  "\\", 
+                               col_names = TRUE, skip = 1, escape_double = FALSE, quote = "\"", 
+                               col_types = cols("X1_1" = col_skip(),
+                                                "X1" = col_skip(),
+                                                "ID_Motor" = col_character(),
+                                                "Herstellernummer" = col_factor(),
+                                                "Werksnummer" = col_factor(),
+                                                "Fehlerhaft" = col_logical(),
+                                                "Fehlerhaft_Datum" = col_skip(),
+                                                "Fehlerhaft_Fahrleistung" = col_skip(),
+                                                "Produktionsdatum_Origin_01011970" = col_integer(),
+                                                "origin" = col_datetime(format = "%d-%m-%Y")
+                                                )
+                               )
+
+Komponente_K1DI2 <- rename(Komponente_K1DI2, Produktionsdatum = Produktionsdatum_Origin_01011970)
+
+Komponente_K1DI2$Produktionsdatum <- as.Date(Komponente_K1DI2$Produktionsdatum, origin = Komponente_K1DI2$origin)
+#Drop colum
+Komponente_K1DI2 <- select(Komponente_K1DI2, "ID_Motor", "Herstellernummer", "Werksnummer", "Produktionsdatum", "Fehlerhaft")
+```
+
+
+
+4th Komponente
+```{r}
+# Komponente_K1DI2 <- read_delim("Data/Komponente_K1DI2_Reduced.txt", delim =  "\t", col_names = FALSE)
+# #Transpose to arrange as column
+# Komponente_K1DI2 <- t(Komponente_K1DI2)
+# 
+# #Seperate the first column
+# Komponente_K1DI2 <- strsplit(Komponente_K1DI2[,1], split = "\\", fixed = TRUE)
+# 
+# names_Komponente_K1DI2 <- as.character(Komponente_K1DI2[[1]])
+# 
+# #Erase name row
+# Komponente_K1DI2[[1]] <- NULL
+# 
+# #Transpose to arrange items as rows
+# Komponente_K1DI2 <- t(data.frame(Komponente_K1DI2))
+# 
+# #Drop 1st line to have same number of items as column names
+# Komponente_K1DI2 <- Komponente_K1DI2[,-c(1)]
+# 
+# #Give names (without quoation mark)
+# colnames(Komponente_K1DI2) <- noquote(names_Komponente_K1DI2)
+# 
+# Komponente_K1DI2[,1] <- noquote(as.factor(Komponente_K1DI2[,2]))
+# 
+# 
+#   
+```
