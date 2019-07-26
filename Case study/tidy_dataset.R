@@ -86,13 +86,19 @@ tidy_dataset <- function(component_data){
     #Check producer
     if(component_data_clean$producer[entry_nr] != id_producer){
       #Print message and correct
+      print(paste("Correcting entry's", component_data_clean$id[entry_nr],
+                  "producer number from", component_data_clean$producer[entry_nr],
+                  "to the id information", id_producer))
+      component_data_clean$producer[entry_nr] <- id_producer
     }
     
     #Check factory
     if(component_data_clean$dactroy[entry_nr] != id_factory){
       #Print message and correct
+      print(paste("Correcting entry's", component_data_clean$id[entry_nr],
+                  "factory number from", component_data_clean$factory[entry_nr],
+                  "to the id information", id_factory))
+      component_data_clean$factory[entry_nr] <- id_factory
     }
   }
-  
-  
 }
