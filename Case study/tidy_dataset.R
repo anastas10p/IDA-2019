@@ -73,9 +73,9 @@ tidy_dataset <- function(component_data){
   component_data_clean <- select(component_data, "id", "producer_number", "factory_number", "faulty", "production_date")
   rm(component_data)
   
-  #Check the clean data for mistakes by comparing the data in the id with the corresponding columns.
-  split_ids <- str_split(string = component_data_clean$id, pattern = "-")
-  
+  # #Check the clean data for mistakes by comparing the data in the id with the corresponding columns.
+  # split_ids <- str_split(string = component_data_clean$id, pattern = "-")
+  # 
   #To be subbed with something without a loop.
   for(entry_nr in c(1:nrow(component_data_clean))){
     
@@ -86,7 +86,7 @@ tidy_dataset <- function(component_data){
     #Check producer
     if(component_data_clean$producer[entry_nr] != id_producer){
       #Print message and correct
-      print(paste("Correcting entry's", component_data_clean$id[entry_nr],
+      print(paste("Correcting component's", component_data_clean$id[entry_nr],
                   "producer number from", component_data_clean$producer[entry_nr],
                   "to the id information", id_producer))
       component_data_clean$producer[entry_nr] <- id_producer
@@ -95,10 +95,13 @@ tidy_dataset <- function(component_data){
     #Check factory
     if(component_data_clean$dactroy[entry_nr] != id_factory){
       #Print message and correct
-      print(paste("Correcting entry's", component_data_clean$id[entry_nr],
+      print(paste("Correcting component's", component_data_clean$id[entry_nr],
                   "factory number from", component_data_clean$factory[entry_nr],
                   "to the id information", id_factory))
       component_data_clean$factory[entry_nr] <- id_factory
     }
+    
+    #We no longer need the full product ID, so we only keep the component code.
+    component_data$id[entry_nr] <- id_split[1]
   }
 }
