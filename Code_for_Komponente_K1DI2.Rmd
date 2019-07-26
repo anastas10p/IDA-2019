@@ -1,0 +1,49 @@
+---
+title: "IDA_CaseStudy_Group4"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+library(readr)
+library(tidyverse)
+library(dplyr)
+```
+
+Read data sets
+Id_Karosserie,Herstellernumer, Werksnummer,Produktionsdatum, Fehlerhaft
+
+```{r}
+#Read file in order to create new file arranged as list
+txt <- read_lines("Data/Komponente_K1DI2_Reduced.txt")
+txt2 <- paste0("\"X\"\\", txt)
+write_lines(txt2, "Data/Komponente_K1DI2_Reduced.txt")
+
+Komponente_K1DI2 <- read_delim("Data/Komponente_K1DI2_Reduced.txt", delim =  "\t", col_names = FALSE)
+Komponente_K1DI2 <- data.frame(t(Komponente_K1DI2))
+
+
+#Research how to write text file without delim
+write_delim(Komponente_K1DI2, "Data/Komponente_K1DI2_Reduced_List.txt", quote_escape = FALSE)
+
+
+Komponente_K1DI2 <- read_delim("Data/Komponente_K1DI2_Reduced_List.txt", delim =  "\\", 
+                               col_names = TRUE, skip = 1, escape_double = FALSE, quote = "\"", 
+                               )
+
+Komponente_K1DI2 <- rename(Komponente_K1DI2, Produktionsdatum = Produktionsdatum_Origin_01011970)
+
+Komponente_K1DI2$Produktionsdatum <- as.Date(Komponente_K1DI2$Produktionsdatum, origin = Komponente_K1DI2$origin)
+#Drop colum
+Komponente_K1DI2 <- select(Komponente_K1DI2, "ID_Motor", "Herstellernummer", "Werksnummer", "Produktionsdatum", "Fehlerhaft")
+```
+
