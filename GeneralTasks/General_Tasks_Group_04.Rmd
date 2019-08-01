@@ -129,6 +129,67 @@ K7_Dortmund
 # 5275 components K7  ended up in vehicles registered in the city of Dortmund
 
 
+#Task 4
+## exercise 4:
+# Which  data  types do the  attributes  of  the  registration  table "Zulassungen_aller_Fahrzeuge" have?
+# function str () gives us the structure of the table and therefore the attributes we need.
+# In the registration table exists three attributes:  IDNummer, Gemeinden und Zulassung; and only one type : Factor 
+registration_all_vehicles <- read.csv2("Data/Zulassung/Zulassungen_alle_Fahrzeuge.csv") %>% subset(select=-1)
+str(registration_all_vehicles)
+
+#Task 5
+# exercise 5:
+#You  want  to  publish  your  application.  Why  does  it  make  sense  to  store  the  data  sets  in  a 
+#database  on  a  server?  Why  is  it  not  recommended  to  store  the  data  sets  on  your  personal computer?
+
+# In the case of a publication, it is useful if the data for the application is continuously available for all the users at any time, so that it can be accessed, when needed. 
+# In theory, it is possible to use a PC  with a corresponding configuration, so that all users can access the data. The problem , however, is that retrieving large amounts 
+# of data on the PC causes a very high workload that exceeds the capacity of the PC, which could limit the data usage. Database servers, on the other hand, are designed to work with large 
+# amounts of data, so they can process queries much faster and more efficiently. In addition, it can be expected that the network connection of a server is much faster than a private Internet connection,
+# which means that the process will be quicker. 
+
+# Task 6
+# exercise  6:
+# On 11 August 2010 there was an accident involving a car produced by your firm.The driver left 
+# the  scene  without  a  trace.  The  license  plate  of  the  car,  which  caused  the  accident,  is  still 
+# missing. Since you work for  the Federal Motor Transport Authority,the police asks for your help to find out where the
+# vehicle with the engine code "K1BE2-104-1041-32049"(corresponds to the engine ID number) was registered. 
+
+engineID_wanted <- "K1BE2-104-1041-32049"
+
+# We read at first all data concerning "Bestandteile aller Fahrzeuge"
+B_Typ11 <- read_delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ11.csv",sep=""), ";", escape_double = FALSE, trim_ws = TRUE) %>% subset(select=c(ID_Fahrzeug,ID_Motor))
+B_Typ12 <- read_delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ12.csv",sep=""), ";", escape_double = FALSE, trim_ws = TRUE) %>% subset(select=c(ID_Fahrzeug,ID_Motor))
+B_Typ21 <- read_delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ21.csv",sep=""), ";", escape_double = FALSE, trim_ws = TRUE) %>% subset(select=c(ID_Fahrzeug,ID_Motor))
+B_Typ22 <- read_delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ22.csv",sep=""), ";", escape_double = FALSE, trim_ws = TRUE) %>% subset(select=c(ID_Fahrzeug,ID_Motor))
+
+# All data about the vehicles are written in one table row by row with each other using rbind()
+vehicles_all_engine <- rbind(B_Typ11,B_Typ12,B_Typ21,B_Typ22)
+
+# Find a vehicle that contains the engine with the corresponding engine serial number
+vehicle_wanted_engine <- filter(vehicles_all_engine, ID_Motor == engineID_wanted)
+print(vehicle_wanted_engine)
+
+# Read "Zulassungen_alle_Fahrzeuge", filter out unnecessary columns (serial numbers)
+registrations_all_vehicles <- read_delim(paste("Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv",sep=""), ";", escape_double = FALSE) %>% subset(select=-1)
+
+# Change name ID 
+colnames(registrations_all_vehicles)[1] <- "ID_Fahrzeug"
+
+#Inner Join, to find vehicle with registrations
+wanted_vehicle <- inner_join(registrations_all_vehicles, vehicle_wanted_engine, by = "ID_Fahrzeug")
+
+# print answer
+print(paste("The wanted vehicle was registered in",
+            wanted_vehicle$Gemeinden[[1]],
+            "at", 
+            format(wanted_vehicle$Zulassung[[1]], "%d. %B %Y"),"."))
+
+# The vehicle with the engine code "K1BE2-104-1041-32049" was registered in Leipzig.
+
+
+
+
 
 
 ```
