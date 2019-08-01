@@ -1,0 +1,136 @@
+---
+title: "General_Tasks_Group_04"
+output: html_document
+---
+
+```{r setup_8, include=FALSE}
+knitr::opts_chunk$set(message = TRUE)
+```
+# Packages
+Include the `shiny`, `tidyverse` and `readr` packages
+```{r}
+
+
+if( !require(tidyverse)){
+  install.packages("tidyverse")
+}
+library(tidyverse)
+
+if( !require(readr)){
+  install.packages("readr")
+}
+library(readr)
+
+if(!require(base)){
+  install.packages("base")
+}
+library(base)
+
+if(!require(ggplot2)){
+  install.packages("ggplot2")
+}
+library(ggplot2)
+
+if(!require(stringr)){
+  install.packages("stringr")
+}
+library(stringr)
+
+```
+## R Markdown
+
+#Task 1
+```{r}
+Komponente_K7<-read.csv("Data/Logistikverzug/Komponente_K7.csv",sep=";",header=TRUE)[,(2:3)]
+Komponente_K7$Produktionsdatum<-as.Date(Komponente_K7$Produktionsdatum)
+
+Verzug_K7<-read.csv("Data/Logistikverzug/Logistikverzug_K7.csv",sep=";",header=TRUE)[,(2:3)]
+Verzug_K7$Wareneingang<-as.Date(Verzug_K7$Wareneingang,format="%d.%m.%Y")
+
+Logisticsdelay<-full_join(Komponente_K7,Verzug_K7,by="IDNummer")
+
+
+#Calculate the delay 
+Logisticsdelay<-Logisticsdelay%>%
+  mutate(delay=Wareneingang-Produktionsdatum)
+Logisticsdelay$delay<-as.numeric(Logisticsdelay$delay)
+Logisticsdelay
+
+#How is the logistics delay distributed?
+summary(Logisticsdelay)
+#By having a look at the summary you can see that the mean value is 5.08. By having a look at the 1st Qu. and 3.Qu. you can find out that the distributon is rather even around the median. The difference between the 1st Qu. and the min is 2 while the difference between the Max and the 3rd Qu. is 7. This is an indicator for the fact it is a distribution with a steap left side. 
+
+#min time
+minimum_time<-min(Logisticsdelay$delay)
+minimum_time
+#max time
+maximum_time<-max(Logisticsdelay$delay)
+maximum_time
+
+#Determine the mean of the logistics delay
+mean_delay<-mean(Logisticsdelay$delay)
+mean_delay
+
+#Visualize the distribution in an appropriate way
+ggplot(Logisticsdelay,aes(delay))+
+  geom_bar()
+
+```
+
+#Task 2
+Why  does  it  make  sense  to  store  the  available  data  in  separate  files  instead  of saving everything in a huge table? How do you call the underlying data base concept?
+
+Data is saved in seperate files in order to be analyzed quickly. Most of the times you only need only certain variables for an analysis. A huge table would only slow down the process. Instead each table as a variable that contains a unique id with which you can merge different tables and gather all information needed for an analysis.
+The concept is called the relational model.
+
+
+## Task 3
+```{r}
+#exercise 3
+#3. How many of the components K7 ended up in vehicles registered in the city of Dortmund?
+
+# At first we read the data we need, Zulassungen aller Fahrzeuge. 
+
+Zulassungen_aller_Fahrzeuge <- read.csv2("Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv") %>% subset(select=-1)
+head(Zulassungen_aller_Fahrzeuge)
+
+# We now read  Bestandteile aller Fahrzeuge
+#K7 is Karosserie component.
+# We need only ID_Fahrzeug und ID_Karosserie , because the rest of the columns are not useful
+Bestandteile_Typ11 <- read_delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ11.csv",sep=""), ";", escape_double = FALSE, trim_ws = TRUE) %>% subset(select=c(ID_Fahrzeug,ID_Karosserie))
+Bestandteile_Typ12 <- read_delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ12.csv",sep=""), ";", escape_double = FALSE, trim_ws = TRUE) %>% subset(select=c(ID_Fahrzeug,ID_Karosserie))
+Bestandteile_Typ21 <- read_delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ21.csv",sep=""), ";", escape_double = FALSE, trim_ws = TRUE) %>% subset(select=c(ID_Fahrzeug,ID_Karosserie))
+Bestandteile_Typ22 <- read_delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ22.csv",sep=""), ";", escape_double = FALSE, trim_ws = TRUE) %>% subset(select=c(ID_Fahrzeug,ID_Karosserie))
+# everything we know about Fahrzeug are written in one table. We use  rbind()
+Fahrzeuge_alle <- rbind(Bestandteile_Typ11,Bestandteile_Typ12,Bestandteile_Typ21,Bestandteile_Typ22)
+
+
+# we now test if the production of the cars is the same with the number of cars that were "zugelassen"
+all(Zulassungen_aller_Fahrzeuge[order(Zulassungen_aller_Fahrzeuge$IDNummer),]$IDNummer == Fahrzeuge_alle[order(Fahrzeuge_alle$ID_Fahrzeug),]$ID_Fahrzeug)
+#--> answer: Yes!
+
+# we now filter vehicles in which K7 is installed
+Fahrzeuge_mit_K7 <- filter(Fahrzeuge_alle,str_detect(Fahrzeuge_alle$ID_Karosserie,"K7"))
+
+#with function filter() we choose those vehicles that were authorisd in Dortmund.
+
+Zulassungen_Dortmund <- filter(Zulassungen_aller_Fahrzeuge, Gemeinden == "DORTMUND")
+head(Zulassungen_Dortmund)
+
+#Next step is to link "Zulassungen_Dortmund" with "Fahrzeuge_mit_K7" . Column name changes.
+colnames(Zulassungen_Dortmund)[1] <- "ID_Fahrzeug"
+head(Zulassungen_Dortmund)
+
+#with inner_join these two are going to be one. The number of rows is the number of the vehicles (Typ 22, OEM 2) and therefore Komponenten K7 which were authorized in Dortmund.
+# nrow() shows the number of rows
+K7_Dortmund <- nrow(inner_join(Zulassungen_Dortmund, Fahrzeuge_mit_K7, by = "ID_Fahrzeug"))
+K7_Dortmund
+
+# 5275 components K7  ended up in vehicles registered in the city of Dortmund
+
+
+
+
+```
+
+
