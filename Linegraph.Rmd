@@ -1,0 +1,233 @@
+---
+title: "Case_Study_Group_04"
+output: html_document
+---
+
+```{r setup_8, include=FALSE}
+knitr::opts_chunk$set(message = TRUE)
+```
+
+# Packages
+Include the `shiny`, `tidyverse` and `readr` packages
+```{r}
+if(!require(shiny)){
+  install.packages("shiny")
+}
+library(shiny)
+
+if(!require(dplyr)){
+  install.packages("dplyr")
+}
+library(dplyr)
+
+if( !require(tidyverse)){
+  install.packages("tidyverse")
+}
+library(tidyverse)
+
+if( !require(readr)){
+  install.packages("readr")
+}
+library(readr)
+if(!require(ggplot2)){
+  install.packages("ggplot2")
+}
+library(ggplot2)
+```
+
+#Import and clean the data
+```{r}
+#später müssen dann alle Daten eingelesen werden
+
+Komponente_K7<-read.table("Data/Komponente/Komponente_K7.txt",sep="",header=TRUE)[,-c(1)]
+Komponente_K7
+
+```
+
+```{r}
+tidy_dataset <- function(component_data){
+  
+  #Drop the columns that do not interest us.
+  component_data <- select(component_data, -c(starts_with("Fehlerhaft_"), starts_with("X")))
+  #str(component_data)
+  #ID:
+  for (id_column in colnames(select(component_data, starts_with("ID")))){
+    component_data[[id_column]] <- as.character(component_data[[id_column]])
+  }
+  #Herstellernummer
+  for (producer_column in colnames(select(component_data, starts_with("Herstellernummer")))){
+    component_data[[producer_column]] <- as.integer(component_data[[producer_column]])
+  }
+  #Werksnummer
+  for (factory_column in colnames(select(component_data, starts_with("Werksnummer")))){
+    component_data[[factory_column]] <- as.integer(component_data[[factory_column]])
+  }
+  #Fehlerhaft
+  for (faulty_column in colnames(select(component_data, starts_with("Fehlerhaft")))){
+    component_data[[faulty_column]] <- as.logical(component_data[[faulty_column]])
+  }
+  #Datum
+  #If the date is set as an origin date:
+  if ("origin" %in% colnames(component_data)){
+    for (production_date_column in colnames(select(component_data, starts_with("Produktionsdatum")))){
+      component_data[[paste("Produktionsdatum", 
+                            ifelse(is.na(strsplit(production_date_column, ".", fixed = TRUE)[[1]][2]),
+                                   "", paste(".",strsplit(production_date_column, sep=".", fixed = TRUE)[[1]][2])),
+                            sep="")]] <- 
+        as.Date(component_data[[production_date_column]], origin = "1970-01-01")
+    }
+  } else {
+    for (production_date_column in colnames(select(component_data, starts_with("Produktionsdatum")))){
+      component_data[[production_date_column]] <- as.Date(component_data[[production_date_column]], format="%Y-%m-%d")
+    }
+  }
+  
+  #Create new clean columns
+  #These commands are kept separate for readability's sake.
+  
+  id_cols <- Filter(Negate(function(x) is.null(unlist(x))), 
+                    list(try(component_data[[colnames(select(component_data, starts_with("ID")))[1]]]), 
+                         try(component_data[[colnames(select(component_data, starts_with("ID")))[2]]]),
+                         try(component_data[[colnames(select(component_data, starts_with("ID")))[3]]])))
+  component_data$id <- coalesce(!!!id_cols)
+  
+  producer_cols <- Filter(Negate(function(x) is.null(unlist(x))), 
+                          list(try(component_data$Herstellernummer), 
+                               try(component_data$Herstellernummer.x), 
+                               try(component_data$Herstellernummer.y)))
+  component_data$producer_number <- coalesce(!!!producer_cols)
+  
+  factory_cols <- Filter(Negate(function(x) is.null(unlist(x))), 
+                         list(try(component_data$Werksnummer), 
+                              try(component_data$Werksnummer.x), 
+                              try(component_data$Werksnummer.y)))
+  component_data$factory_number <- coalesce(!!!factory_cols)
+  
+  date_cols <- Filter(Negate(function(x) is.null(unlist(x))), 
+                      list(try(component_data$Produktionsdatum), 
+                           try(component_data$Produktionsdatum.x),
+                           try(component_data$Produktionsdatum.y)))
+  component_data$production_date <- coalesce(!!!date_cols)
+  
+  faulty_cols <- Filter(Negate(function(x) is.null(unlist(x))), 
+                        list(try(component_data$Fehlerhaft), 
+                             try(component_data$Fehlerhaft.x), 
+                             try(component_data$Fehlerhaft.y)))
+  component_data$faulty <- coalesce(!!!faulty_cols)
+  
+  
+  #Select the new columns
+  component_data_clean <- select(component_data, "id", "producer_number", "factory_number", "faulty", "production_date")[!duplicated(component_data$id),]
+}
+
+#x4<-tidy_dataset(Komponente_K4)
+#x4
+#x5<-tidy_dataset(Komponente_K5)
+#x5
+#x6<-tidy_dataset(Komponente_K6)
+#x6
+x7<-tidy_dataset(Komponente_K7)
+rownames(x7)<-NULL
+x7
+
+```
+
+#Filter Data
+
+
+```{r}
+RelativeFails_K7<-x7%>%
+  mutate(helferspalte=1)%>%
+ group_by(factory_number,production_date,helferspalte)%>%
+  summarise(Total=sum(faulty,na.rm=TRUE),relRatioinProzent= (Total/sum(helferspalte))*100)%>%
+  select(-(helferspalte))%>% #remove helperspalte
+  arrange(production_date)
+RelativeFails_K7
+
+
+```
+
+#nach Jahren in Tabellen packen
+
+#Test der Visualisierung
+```{r}
+testdataset<-filter(RelativeFails_K7,factory_number==1132)
+testdataset
+#das Jahr auswählen --> wird ja eigentlich schon vorher gefiltert
+#nach Komponente groupen; Komponente wird über nen Knop ausgewählt
+ggplot(RelativeFails_K7,aes(production_date,relRatioinProzent,group=factory_number))+
+  geom_line(aes(color=factory_number))
+
+```
+
+```{r}
+#
+#writing ui function ---alles aus Augabe 9 kopiert
+ui <- fluidPage(
+  titlePanel("Case Study Gruppe 4"),
+  sidebarLayout(
+    sidebarPanel(radioButtons(inputId = "selectedYear", "Wählen Sie ein Analysejahr aus: ", choices = list("2008", "2009", "2010", "2011", "2012", "2013")),radioButtons(inputId = "selectedFactory", "Wählen Sie eine Factory: ", choices = list("1132", "1142"))),
+    
+  mainPanel(
+    plotOutput(outputId = "plot"),
+    plotOutput(outputId = "plot2")
+  )
+  )
+)
+
+#> chars <- "test"
+#> value <- "es"
+#> grepl(value, chars)
+#[1] TRUE
+
+#writing server function
+server <- function(input, output) {
+  output$plot <- renderPlot({
+
+      #filter for the year that is provided in the input ; HIER MUSS DIE RICHTIGE TABELLE EINGELESEN WERDEN
+      filterperyear<-filter(RelativeFails_K7,grepl(input$selectedYear,production_date)==TRUE)
+    #  if(input$selectedFactory=="1142"){ #hier müsste man eigentlich nach der Komponente filtern
+       # newdata<-filter(filterperyear,factory_number=="1142")
+        newdata<-filterperyear
+          ggplot(newdata,aes(production_date,relRatioinProzent,group=factory_number))+
+          geom_line(aes(color=factory_number))+
+            coord_cartesian(xlim=c(as.Date(2008-01-01),as.Date(2008-12-31)))
+          #last_plot() + xlim(0, 60)
+          #coord_cartesian(ylim=c(0, 25))
+     # }
+     # ggplot(RelativeFails_K7,aes(production_date,relRatioinProzent,group=factory_number))+
+      # geom_line(aes(color=factory_number))
+      
+   # }
+   
+       
+      
+    
+    
+  })
+  #Diesen Graphen braucht man nicht
+   output$plot2 <- renderPlot({
+
+      #filter for the year that is provided in the input
+      filterperyear<-filter(RelativeFails_K7,grepl(input$selectedYear,production_date)==TRUE)
+    #  if(input$selectedFactory=="1142"){ #hier müsste man eigentlich nach der Komponente filtern
+       # newdata<-filter(filterperyear,factory_number=="1142")
+        newdata<-filterperyear
+          ggplot(newdata,aes(production_date,Total,group=factory_number))+
+          geom_line(aes(color=factory_number))
+     # }
+     # ggplot(RelativeFails_K7,aes(production_date,relRatioinProzent,group=factory_number))+
+      # geom_line(aes(color=factory_number))
+      
+   # }
+   
+       
+      
+    
+    
+  })
+  
+}
+
+shinyApp(ui, server)
+```
