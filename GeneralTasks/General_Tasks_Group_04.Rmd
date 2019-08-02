@@ -41,39 +41,42 @@ library(stringr)
 
 #Task 1
 ```{r}
-Komponente_K7<-read.csv("Data/Logistikverzug/Komponente_K7.csv",sep=";",header=TRUE)[,(2:3)]
-Komponente_K7$Produktionsdatum<-as.Date(Komponente_K7$Produktionsdatum)
+component_K7 <- read.delim(paste("Data/Komponente/Komponente_K7.csv", sep = ""), ";", header = TRUE)[, (2:3)]
+component_K7$Produktionsdatum <- as.Date(component_K7$Produktionsdatum)
 
-Verzug_K7<-read.csv("Data/Logistikverzug/Logistikverzug_K7.csv",sep=";",header=TRUE)[,(2:3)]
-Verzug_K7$Wareneingang<-as.Date(Verzug_K7$Wareneingang,format="%d.%m.%Y")
 
-Logisticsdelay<-full_join(Komponente_K7,Verzug_K7,by="IDNummer")
+Verzug_K7 <- read.csv("Data/Logistikverzug/Logistikverzug_K7.csv", sep = ";", header = TRUE)[, (2:3)]
+Verzug_K7$Wareneingang <- as.Date(Verzug_K7$Wareneingang, format = "%d.%m.%Y")
+
+Logistics_delay <- full_join(Komponente_K7, Verzug_K7, by = "IDNummer")
 
 
 #Calculate the delay 
-Logisticsdelay<-Logisticsdelay%>%
-  mutate(delay=Wareneingang-Produktionsdatum)
-Logisticsdelay$delay<-as.numeric(Logisticsdelay$delay)
-Logisticsdelay
+Logistics_delay <- Logistics_delay %>%
+  mutate(delay = Wareneingang-Produktionsdatum)
+Logistics_delay$delay <- as.numeric(Logistics_delay$delay)
+Logistics_delay
 
 #How is the logistics delay distributed?
-summary(Logisticsdelay)
+summary(Logistics_delay)
 #By having a look at the summary you can see that the mean value is 5.08. By having a look at the 1st Qu. and 3.Qu. you can find out that the distributon is rather even around the median. The difference between the 1st Qu. and the min is 2 while the difference between the Max and the 3rd Qu. is 7. This is an indicator for the fact it is a distribution with a steap left side. 
 
 #min time
-minimum_time<-min(Logisticsdelay$delay)
+minimum_time <- min(Logistics_delay$delay)
 minimum_time
 #max time
-maximum_time<-max(Logisticsdelay$delay)
+maximum_time <- max(Logistics_delay$delay)
 maximum_time
 
 #Determine the mean of the logistics delay
-mean_delay<-mean(Logisticsdelay$delay)
+mean_delay <- mean(Logistics_delay$delay)
 mean_delay
 
 #Visualize the distribution in an appropriate way
-ggplot(Logisticsdelay,aes(delay))+
+ggplot(Logistics_delay,aes(delay)) +
   geom_bar()
+
+
 
 ```
 
@@ -86,55 +89,61 @@ The concept is called the relational model.
 
 ## Task 3
 ```{r}
-#exercise 3
+
 #3. How many of the components K7 ended up in vehicles registered in the city of Dortmund?
 
 # At first we read the data we need, Zulassungen aller Fahrzeuge. 
 
-Zulassungen_aller_Fahrzeuge <- read.csv2("Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv") %>% subset(select=-1)
-head(Zulassungen_aller_Fahrzeuge)
+# At first we read the data we need, Zulassungen aller Fahrzeuge. 
+
+registration_all_vehicles <-  read.delim(paste("Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv", sep = ""), ";", header  = TRUE) %>% subset(select = -1)
+head(registration_all_vehicles)
 
 # We now read  Bestandteile aller Fahrzeuge
+
 #K7 is Karosserie component.
+
 # We need only ID_Fahrzeug und ID_Karosserie , because the rest of the columns are not useful
-Bestandteile_Typ11 <- read_delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ11.csv",sep=""), ";", escape_double = FALSE, trim_ws = TRUE) %>% subset(select=c(ID_Fahrzeug,ID_Karosserie))
-Bestandteile_Typ12 <- read_delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ12.csv",sep=""), ";", escape_double = FALSE, trim_ws = TRUE) %>% subset(select=c(ID_Fahrzeug,ID_Karosserie))
-Bestandteile_Typ21 <- read_delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ21.csv",sep=""), ";", escape_double = FALSE, trim_ws = TRUE) %>% subset(select=c(ID_Fahrzeug,ID_Karosserie))
-Bestandteile_Typ22 <- read_delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ22.csv",sep=""), ";", escape_double = FALSE, trim_ws = TRUE) %>% subset(select=c(ID_Fahrzeug,ID_Karosserie))
+
+component_part_Typ11 <- read.delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ11.csv", sep = ""), ";", header = TRUE) %>% subset(select=c(ID_Fahrzeug, ID_Karosserie))
+component_part_Typ12 <- read.delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ12.csv", sep = ""), ";", header = TRUE) %>% subset(select=c(ID_Fahrzeug, ID_Karosserie))
+component_part_Typ21 <- read.delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ21.csv", sep = ""), ";", header = TRUE) %>% subset(select=c(ID_Fahrzeug, ID_Karosserie))
+component_part_Typ22 <- read.delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ22.csv", sep = ""), ";", header = TRUE) %>% subset(select=c(ID_Fahrzeug, ID_Karosserie))
+
 # everything we know about Fahrzeug are written in one table. We use  rbind()
-Fahrzeuge_alle <- rbind(Bestandteile_Typ11,Bestandteile_Typ12,Bestandteile_Typ21,Bestandteile_Typ22)
+all_vehicles <- rbind(component_part_Typ11, component_part_Typ12, component_part_Typ21, component_part_Typ22)
 
 
 # we now test if the production of the cars is the same with the number of cars that were "zugelassen"
-all(Zulassungen_aller_Fahrzeuge[order(Zulassungen_aller_Fahrzeuge$IDNummer),]$IDNummer == Fahrzeuge_alle[order(Fahrzeuge_alle$ID_Fahrzeug),]$ID_Fahrzeug)
+all(registration_all_vehicles[order(registration_all_vehicles$IDNummer), ]$IDNummer == all_vehicles[order(all_vehicles$ID_Fahrzeug), ]$ID_Fahrzeug)
 #--> answer: Yes!
 
 # we now filter vehicles in which K7 is installed
-Fahrzeuge_mit_K7 <- filter(Fahrzeuge_alle,str_detect(Fahrzeuge_alle$ID_Karosserie,"K7"))
+vehicles_with_K7 <- filter(all_vehicles, str_detect(all_vehicles$ID_Karosserie, "K7"))
 
-#with function filter() we choose those vehicles that were authorisd in Dortmund.
+#with function filter() we choose those vehicles that were authorised in Dortmund.
 
-Zulassungen_Dortmund <- filter(Zulassungen_aller_Fahrzeuge, Gemeinden == "DORTMUND")
-head(Zulassungen_Dortmund)
+registration_Dortmund <- filter(registration_all_vehicles, Gemeinden == "DORTMUND")
+head(registration_Dortmund)
 
-#Next step is to link "Zulassungen_Dortmund" with "Fahrzeuge_mit_K7" . Column name changes.
-colnames(Zulassungen_Dortmund)[1] <- "ID_Fahrzeug"
-head(Zulassungen_Dortmund)
+#Next step is to link "registration_Dortmund" with "vehicles_with_K7". Column name changes.
+colnames(registration_Dortmund)[1] <- "ID_Fahrzeug"
+head(registration_Dortmund)
 
 #with inner_join these two are going to be one. The number of rows is the number of the vehicles (Typ 22, OEM 2) and therefore Komponenten K7 which were authorized in Dortmund.
 # nrow() shows the number of rows
-K7_Dortmund <- nrow(inner_join(Zulassungen_Dortmund, Fahrzeuge_mit_K7, by = "ID_Fahrzeug"))
+K7_Dortmund <- nrow(inner_join(registration_Dortmund, vehicles_with_K7, by = "ID_Fahrzeug"))
 K7_Dortmund
 
 # 5275 components K7  ended up in vehicles registered in the city of Dortmund
+
 
 
 #Task 4
 ## exercise 4:
 # Which  data  types do the  attributes  of  the  registration  table "Zulassungen_aller_Fahrzeuge" have?
 # function str () gives us the structure of the table and therefore the attributes we need.
-# In the registration table exists three attributes:  IDNummer, Gemeinden und Zulassung; and only one type : Factor 
-registration_all_vehicles <- read.csv2("Data/Zulassung/Zulassungen_alle_Fahrzeuge.csv") %>% subset(select=-1)
+# In the registration table exists four attributes: X, IDNummer, Gemeinden und Zulassung; and  three types : character, date and double 
 str(registration_all_vehicles)
 
 #Task 5
@@ -158,20 +167,20 @@ str(registration_all_vehicles)
 engineID_wanted <- "K1BE2-104-1041-32049"
 
 # We read at first all data concerning "Bestandteile aller Fahrzeuge"
-B_Typ11 <- read_delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ11.csv",sep=""), ";", escape_double = FALSE, trim_ws = TRUE) %>% subset(select=c(ID_Fahrzeug,ID_Motor))
-B_Typ12 <- read_delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ12.csv",sep=""), ";", escape_double = FALSE, trim_ws = TRUE) %>% subset(select=c(ID_Fahrzeug,ID_Motor))
-B_Typ21 <- read_delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ21.csv",sep=""), ";", escape_double = FALSE, trim_ws = TRUE) %>% subset(select=c(ID_Fahrzeug,ID_Motor))
-B_Typ22 <- read_delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ22.csv",sep=""), ";", escape_double = FALSE, trim_ws = TRUE) %>% subset(select=c(ID_Fahrzeug,ID_Motor))
+component_part_Typ11 <- read.delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ11.csv", sep = ""), ";", header = TRUE) %>% subset(select = c(ID_Fahrzeug, ID_Motor))
+component_part_Typ12 <- read.delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ12.csv", sep = ""), ";", header = TRUE) %>% subset(select = c(ID_Fahrzeug, ID_Motor))
+component_part_Typ21 <- read.delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ21.csv", sep = ""), ";", header = TRUE) %>% subset(select = c(ID_Fahrzeug, ID_Motor))
+component_part_Typ22 <- read.delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ22.csv", sep = ""), ";", header = TRUE) %>% subset(select = c(ID_Fahrzeug, ID_Motor))
 
 # All data about the vehicles are written in one table row by row with each other using rbind()
-vehicles_all_engine <- rbind(B_Typ11,B_Typ12,B_Typ21,B_Typ22)
+vehicles_all_engine <- rbind(component_part_Typ11, component_part_Typ12, component_part_Typ21, component_part_Typ22)
 
 # Find a vehicle that contains the engine with the corresponding engine serial number
 vehicle_wanted_engine <- filter(vehicles_all_engine, ID_Motor == engineID_wanted)
 print(vehicle_wanted_engine)
 
 # Read "Zulassungen_alle_Fahrzeuge", filter out unnecessary columns (serial numbers)
-registrations_all_vehicles <- read_delim(paste("Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv",sep=""), ";", escape_double = FALSE) %>% subset(select=-1)
+registrations_all_vehicles <- read.delim(paste("Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv", sep = ""), ";", header = TRUE) %>% subset(select = -1)
 
 # Change name ID 
 colnames(registrations_all_vehicles)[1] <- "ID_Fahrzeug"
@@ -184,8 +193,6 @@ print(paste("The wanted vehicle was registered in",
             wanted_vehicle$Gemeinden[[1]],
             "at", 
             format(wanted_vehicle$Zulassung[[1]], "%d. %B %Y"),"."))
-
-# The vehicle with the engine code "K1BE2-104-1041-32049" was registered in Leipzig.
 
 
 
