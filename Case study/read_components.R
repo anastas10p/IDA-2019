@@ -36,7 +36,7 @@ strigaros <- gsub("||", "|", strigaros, fixed = TRUE)
 read.delim(strigaros,  header = TRUE, sep = " ")
 write_lines( strigaros ,"strigaros_reduced.txt")
 # es gibt manche whitespaces im txt file 
-K2le1 <- K1di2 <- read.delim(paste("strigaros_reduced.txt", sep = "") , header = TRUE , " ")
+K2le1 <- read.delim(paste("strigaros_reduced.txt", sep = "") , header = TRUE , " ")
 
 #K3
 
