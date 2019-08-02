@@ -15,7 +15,7 @@ striga <- gsub("\t", "", striga, fixed = FALSE)
 read.delim(striga,  header = TRUE, sep = "|")
 write_lines( striga,"striga_reduced.txt")
 # es gibt manche whitespaces im txt file 
-K1di2 <- read.delim(paste("striga_reduced.txt", sep = "") , header = TRUE , sep ="|")
+K1di2 <- read.delim(paste("striga_reduced.txt", sep = "") , header = TRUE , "|")
 
   
   
