@@ -78,5 +78,5 @@ tidy_dataset <- function(component_data){
   component_data_clean$producer <- as.factor(component_data_clean$producer)
   component_data_clean$factory <- as.factor(component_data_clean$factory)
   
-  component_data_clean
+  distinct(component_data_clean)
 }
