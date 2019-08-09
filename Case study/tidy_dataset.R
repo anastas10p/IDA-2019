@@ -70,13 +70,14 @@ tidy_dataset <- function(component_data){
   
   #Fill the producer and factory column using the id data.
   component_data_clean <- component_data %>%
-    separate(id, c("id", "producer", "factory", "number"), "-") %>%
-    select(c("id", "producer", "factory",  "faulty", "production_date", "faulty_date", "distance"))
+    separate(id, c("name", "producer", "factory", "count"), "-") %>%
+    select(c("name", "count", "producer", "factory",  "faulty", "production_date", "faulty_date", "distance"))
   rm(component_data)
   
-  component_data_clean$id <- as.factor(component_data_clean$id)
+  component_data_clean$name <- as.factor(component_data_clean$name)
+  component_data_clean$count <- as.numeric(component_data_clean$count)
   component_data_clean$producer <- as.factor(component_data_clean$producer)
   component_data_clean$factory <- as.factor(component_data_clean$factory)
   
-  component_data_clean
+  distinct(component_data_clean)
 }
