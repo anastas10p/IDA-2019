@@ -1,47 +1,54 @@
 library(shiny)
 library(ggplot2)
+library(cowplot)
 library(dplyr)
 
-#generate example dataframes
-comp <- c("K1", "K2", "K3", "K4", "K1", "K2", "K3", "K4", "K1", "K2", "K3", "K4", "K1", "K2", "K3", "K4")
-factory <- c("F1", "F1", "F1", "F1", "F1", "F1", "F1", "F1", "F2", "F2", "F2", "F2", "F2", "F2", "F2", "F2")
-absErr <- c(50, 20, 65, 25, 70, 30, 15, 5, 100, 20, 65, 25, 80, 30, 15, 50)
-relErr <- c(0.12, 0.05, 0.36, 0.15, 0.3, 0.6, 0.75, 0.2, 0.1, 0.05, 0.36, 0.8, 0.3, 0.6, 0.75, 0.5)
-year <- c(2017, 2017, 2017, 2017, 2018, 2018, 2018, 2018, 2017, 2017, 2017, 2017, 2018, 2018, 2018, 2018)
-data <- data.frame(Component = comp, factory = factory, absError = absErr, relError = relErr, year = year, stringsAsFactors = FALSE)
+# data <- allComponents
+# data$production_date <- format(as.Date(data$production_date, format="%Y-%m-%d"),"%Y")
+# 
+# data <- data %>%
+#   group_by(id, factory, production_date) %>%
+#   summarise(abs_error = sum(faulty, na.rm = TRUE), rel_error = abs_error/length(id))
+
 
 #define functions for plotting
-pareto <- function(df, y){
+pareto <- function(df, f, e){
     
     #filter year and factory
-    df <- filter(df, year == y)
+    #df <- filter(df, production_date == y)
+    df <- filter(df, factory == f)
+      
+    if (e == "rel"){
+        df$error_data <- df$rel_error
+        ymax <- 1
+        ylabel <- "Relative Error"
+    }
+    if (e == "abs"){
+        df$error_data <- df$abs_error
+        ymax <- 10000
+        ylabel <- "Absolute Error"
+    }
     
-    #descending order
-    df <- df[order(df$relError, decreasing=TRUE), ]
-    
-    #make factors
-    df$Component <- factor(df$Component, levels= unique(df$Component))
-    
-    #new column cumulative relative error
-    df$cumRelError <- cumsum(df$relError)
-    
-    #generate the Pareto chart
-    ggplot(df, aes(x=df$Component)) +
-        geom_bar(aes(y=df$relError), fill='blue', stat = "identity", width = 0.8) +
-        scale_y_continuous(sec.axis = sec_axis(~./max(df$cumRelError), name = "Cumulated")) +
-        geom_point(aes(y=df$cumRelError), color = "green", size=2) +
-        geom_path(aes(y=df$cumRelError, group=1), colour="blue", size=0.5) +
-        labs(title = "Pareto", x = 'Components', y = 'Relative Error') +
-        facet_grid(cols = vars(df$factory), scales = "free")
+    if (length(df$factory != 0)){
+        #descending order
+        df <- df[order(df$error_data, decreasing=TRUE), ]
+        
+        #make factors
+        df$id <- factor(df$id, levels= unique(df$id))
+        
+        #new column cumulative relative error
+        df$cum_error <- cumsum(df$error_data)
+        
+        #generate the Pareto chart
+        ggplot(df, aes(x=df$id, y=df$error_data)) +
+            geom_bar(fill="blue", stat = "identity", width = 0.8) +
+            #scale_y_continuous(limits = c(0, ymax)) +
+            scale_y_continuous(limits = c(0,ymax), sec.axis = sec_axis(~./max(df$cum_error, name = "Cumulated"))) +
+            geom_point(aes(y=df$cum_error), color = "green", size=2) +
+            geom_path(aes(y=df$cum_error, group=1), colour="blue", size=0.5) +
+            labs(title = df$factory, x = "Components", y = ylabel)
+    }
 }
-
-linediag <- function(df, comp){
-    df <- filter(df, Component == comp)
-    
-    ggplot(df, aes(x=df$year, y=df$absError, col = df$factory)) +
-        geom_line()
-}
-
 
 ############### UI ###############
 ui <- fluidPage(
@@ -50,18 +57,15 @@ ui <- fluidPage(
     headerPanel("Test"),
     
     selectInput("year", "Year:", 
-                choices = c("2017", "2018", "2019")),
+                choices = 2008:2016),
+    
+    selectInput("error", "Relative/Absolute Error", choices = list("Relative", "Absolute")),
     
     # Show plots
-    fluidRow(
-        column(8,
-            plotOutput("Pareto"))),
-    fluidRow(
-        column(8,
-            plotOutput("Pareto2"))),
-    fluidRow(column(4,
+    fluidRow(plotOutput("Pareto")),
+    fluidRow(column(8,
         plotOutput("linediagram"))),
-    fluidRow(column(4,
+    fluidRow(column(8,
         dataTableOutput("dataset")))
 )
 
@@ -70,33 +74,45 @@ ui <- fluidPage(
 server <- function(input, output) {
     
     #select input to filter by year
-    datasetInput <- reactive({
+    year_input <- reactive({
         switch(input$year,
-               "2017" = 2017,
-               "2018" = 2018,
-               "2019" = 2019)
+               "2008" = 2008,
+               "2009" = 2009,
+               "2010" = 2010,
+               "2011" = 2011,
+               "2012" = 2012,
+               "2013" = 2013,
+               "2014" = 2014,
+               "2015" = 2015,
+               "2016" = 2016,)
+    })
+    
+    error_input <- reactive({
+        switch(input$error,
+               "Relative" = "rel",
+               "Absolute" = "abs",)
     })
     
     #Pareto diagram for the first factory
     output$Pareto <- renderPlot({
-        x    <- datasetInput()
-        pareto(data, x)
-    })
-    
-    #Pareto diagram for the second factory
-    output$Pareto2 <- renderPlot({
-        x    <- datasetInput()
-        pareto(data, x)
+        y <- year_input()
+        data <- filter(data, production_date == y)
+        e <- error_input()
+        plots <- list()
+        for (i in 1:length(unique(data$factory))){
+            plots[[i]] <- pareto(data,unique(data$factory)[i], e)
+        }
+        do.call(plot_grid, c(plots, list(nrow = 2)))
     })
     
     
     #Line diagram for one component
-    output$linediagram <- renderPlot({
-        linediag(data, "K1")
-    })
-    
+    # output$linediagram <- renderPlot({
+    #     linediag(data, "K1")
+    # })
+    # 
     #Show the basic dataset
-    output$dataset <- renderDataTable(data)
+#     output$dataset <- renderDataTable(data)
 }
 
 
