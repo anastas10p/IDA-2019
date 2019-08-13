@@ -1,0 +1,221 @@
+---
+title: "General_Tasks_Group_04"
+output: html_document
+---
+
+```{r setup_8, include=FALSE}
+knitr::opts_chunk$set(message = TRUE)
+```
+# Packages
+Include the `shiny`, `tidyverse` and `readr` packages
+```{r}
+if( !require(tidyverse)){
+  install.packages("tidyverse")
+}
+library(tidyverse)
+
+if( !require(readr)){
+  install.packages("readr")
+}
+library(readr)
+
+if(!require(base)){
+  install.packages("base")
+}
+library(base)
+
+if(!require(ggplot2)){
+  install.packages("ggplot2")
+}
+library(ggplot2)
+
+if(!require(stringr)){
+  install.packages("stringr")
+}
+library(stringr)
+
+```
+## R Markdown
+
+#Task 1
+Logistics play a more and more important role in the product development of the automobile industry. Parts produced by the supplier must first be delivered to the OEM before they can be installed. What seems logical at first sight should be analyzed in more detailed way for a professional application.
+ Therefore, create a distribution for the logistics delay of component „K7". Use the production
+  date (“Produktionsdatum”) from the data set "Komponente_K7.csv" and the receiving date of incoming goods (“Wareneingang”) from "Logistics_delay_K7.csv". You can assume that the manufacturer delivers the goods on the date of production.
+For the model design in R, create a new data set "Logistics delay" that contains the required information from both data sets.
+Answer the following questions:
+    
+ How is the logistics delay distributed? Justify your selection and briefly describe your approach.
+ What is the minimum/maximum time between delivering and receiving goods?
+ Determine the mean of the logistics delay.
+ Visualize the distribution in an appropriate way.
+
+```{r}
+#Read data of component K7
+component_K7 <- read.delim(paste("Data/Logistikverzug/Komponente_K7.csv", sep = ""), ";", header = TRUE)[, (2:3)]
+#Create date column 
+component_K7$Produktionsdatum <- as.Date(component_K7$Produktionsdatum)
+
+
+delay_K7 <- read.csv("Data/Logistikverzug/Logistikverzug_K7.csv", sep = ";", header = TRUE)[, (2:3)]
+delay_K7$Wareneingang <- as.Date(delay_K7$Wareneingang, format = "%d.%m.%Y")
+
+logistics_delay <- full_join(component_K7, delay_K7, by = "IDNummer")
+
+
+#Calculate the delay 
+logistics_delay <- logistics_delay %>%
+  mutate(delay = Wareneingang-Produktionsdatum)
+logistics_delay$delay <- as.numeric(logistics_delay$delay)
+logistics_delay
+
+#How is the logistics delay distributed?
+summary(logistics_delay)
+```
+
+By having a look at the summary above you can see that the mean value of the delay is 5.08. By having a look at the 1st Qu. and 3.Qu. you can find out that the distributon is rather even around the median. The difference between the 1st Qu. and the min is 2 while the difference between the Max and the 3rd Qu. is 7. This is an indicator for the fact it is a distribution with a steap left side. 
+
+```{r}
+#min time
+minimum_time <- min(logistics_delay$delay)
+print(paste("The minimum delay is", minimum_time, "days"))
+#max time
+maximum_time <- max(logistics_delay$delay)
+maximum_time
+print(paste("The maximum delay is", maximum_time, "days"))
+
+#Determine the mean of the logistics delay
+mean_delay <- mean(logistics_delay$delay)
+mean_delay
+print(paste("The mean delay is", mean_delay, "days"))
+
+#Visualize the distribution in an appropriate way
+ggplot(logistics_delay,aes(delay)) +
+  geom_histogram(binwidth = 0.5) +
+  geom_vline(xintercept = minimum_time, linetype = "dashed", color = "blue") +
+  geom_vline(xintercept = maximum_time, linetype = "dashed", color = "green") +
+  geom_vline(xintercept = mean_delay, linetype = "dashed", color = "yellow") +
+  labs(x = "Delay in days", y = "Amount")
+
+
+```
+In the figure above, the distribution of the delays in days is depicted. As suspected, it has a steap left side. The minimum (dashed blue),the mean (dashed yellow) and the maximum (dashed green) are depicted as vertical lines. 
+
+
+
+#Task 2
+Why  does  it  make  sense  to  store  the  available  data  in  separate  files  instead  of saving everything in a huge table? How do you call the underlying data base concept?
+
+Data is saved in seperate files in order to be analyzed quickly. Most of the times you only need certain variables for an analysis. A huge table would only slow down the process. Instead each table as a variable that contains a unique id with which you can merge different tables and gather all information needed for an analysis.
+The concept is called the relational model.
+
+
+#Task 3
+
+How many of the components K7 ended up in vehicles registered in the city of Dortmund?
+At first we read the data we need, Zulassungen aller Fahrzeuge.
+
+```{r}
+registration_all_vehicles <-  read.delim(paste("Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv", sep = ""), ";", header  = TRUE) %>% subset(select = -1)
+head(registration_all_vehicles)
+
+# We now read  Bestandteile aller Fahrzeuge
+
+# K7 is Karosserie component.
+
+# We need only ID_Fahrzeug und ID_Karosserie , because the rest of the columns are not useful
+
+component_part_Typ11 <- read.delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ11.csv", sep = ""), ";", header = TRUE) %>% subset(select=c(ID_Fahrzeug, ID_Karosserie))
+component_part_Typ12 <- read.delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ12.csv", sep = ""), ";", header = TRUE) %>% subset(select=c(ID_Fahrzeug, ID_Karosserie))
+component_part_Typ21 <- read.delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ21.csv", sep = ""), ";", header = TRUE) %>% subset(select=c(ID_Fahrzeug, ID_Karosserie))
+component_part_Typ22 <- read.delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ22.csv", sep = ""), ";", header = TRUE) %>% subset(select=c(ID_Fahrzeug, ID_Karosserie))
+
+# everything we know about Fahrzeug are written in one table. We use  rbind()
+all_vehicles <- rbind(component_part_Typ11, component_part_Typ12, component_part_Typ21, component_part_Typ22)
+
+
+# we now test if the production of the cars is the same with the number of cars that were "zugelassen"
+all(registration_all_vehicles[order(registration_all_vehicles$IDNummer), ]$IDNummer == all_vehicles[order(all_vehicles$ID_Fahrzeug), ]$ID_Fahrzeug)
+```
+--> answer: TRUE! The number of registered cars is the same with the number of produced cars registered.If not this would have been an indicator that the provided data was wrong
+
+```{r}
+# we now filter vehicles in which K7 is installed
+vehicles_with_K7 <- filter(all_vehicles, str_detect(all_vehicles$ID_Karosserie, "K7"))
+
+#with function filter() we choose those vehicles that were authorised in Dortmund.
+registration_Dortmund <- filter(registration_all_vehicles, Gemeinden == "DORTMUND")
+head(registration_Dortmund)
+
+#Next step is to link "registration_Dortmund" with "vehicles_with_K7". Column name changes.
+colnames(registration_Dortmund)[1] <- "ID_Fahrzeug"
+head(registration_Dortmund)
+
+#with inner_join these two are going to be one. The number of rows is the number of the vehicles (Typ 22, OEM 2) and therefore Komponenten K7 which were authorized in Dortmund.
+# nrow() shows the number of rows
+K7_Dortmund <- nrow(inner_join(registration_Dortmund, vehicles_with_K7, by = "ID_Fahrzeug"))
+print(paste(K7_Dortmund, "components K7 ended up in vehicles registered in the city of Dortmund"))
+
+```
+
+
+
+
+
+#Task 4
+Which  data  types do the  attributes  of  the  registration  table "Zulassungen_aller_Fahrzeuge" have?
+```{r}
+str(registration_all_vehicles)
+```
+function str () gives us the structure of the table and therefore the attributes we need.
+In the registration table exists four attributes: X, IDNummer, Gemeinden und Zulassung; and  three types : character, date and double 
+
+
+#Task 5
+You  want  to  publish  your  application.  Why  does  it  make  sense  to  store  the  data  sets  in  a 
+database  on  a  server?  Why  is  it  not  recommended  to  store  the  data  sets  on  your  personal computer?
+
+In the case of a publication, it is useful if the data for the application is continuously available for all the users at any time, so that it can be accessed, when needed. 
+In theory, it is possible to use a PC with a corresponding configuration, so that all users can access the data. The problem , however, is that retrieving large amounts of data on the PC causes a very high workload that exceeds the capacity of the PC, which could limit the data usage. Database servers, on the other hand, are designed to work with large amounts of data, so they can process queries much faster and more efficiently. In addition, it can be expected that the network connection of a server is much faster than a private Internet connection, which means that the process will be quicker. 
+
+
+
+# Task 6
+On 11 August 2010 there was an accident involving a car produced by your firm.The driver left the  scene  without  a  trace.  The  license  plate  of  the  car,  which  caused  the  accident,  is  still 
+missing. Since you work for  the Federal Motor Transport Authority,the police asks for your help to find out where the vehicle with the engine code "K1BE2-104-1041-32049"(corresponds to the engine ID number) was registered. 
+
+```{r}
+engineID_wanted <- "K1BE2-104-1041-32049"
+
+# We read at first all data concerning "Bestandteile aller Fahrzeuge"
+component_part_Typ11 <- read.delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ11.csv", sep = ""), ";", header = TRUE) %>% subset(select = c(ID_Fahrzeug, ID_Motor))
+component_part_Typ12 <- read.delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ12.csv", sep = ""), ";", header = TRUE) %>% subset(select = c(ID_Fahrzeug, ID_Motor))
+component_part_Typ21 <- read.delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ21.csv", sep = ""), ";", header = TRUE) %>% subset(select = c(ID_Fahrzeug, ID_Motor))
+component_part_Typ22 <- read.delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ22.csv", sep = ""), ";", header = TRUE) %>% subset(select = c(ID_Fahrzeug, ID_Motor))
+
+# All data about the vehicles are written in one table row by row with each other using rbind()
+vehicles_all_engine <- rbind(component_part_Typ11, component_part_Typ12, component_part_Typ21, component_part_Typ22)
+
+# Find a vehicle that contains the engine with the corresponding engine serial number
+vehicle_wanted_engine <- filter(vehicles_all_engine, ID_Motor == engineID_wanted)
+print(vehicle_wanted_engine)
+
+# Read "Zulassungen_alle_Fahrzeuge", filter out unnecessary columns (serial numbers)
+registrations_all_vehicles <- read.delim(paste("Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv", sep = ""), ";", header = TRUE) %>% subset(select = -1)
+
+# Change name ID 
+colnames(registrations_all_vehicles)[1] <- "ID_Fahrzeug"
+
+#Inner Join, to find vehicle with registrations
+wanted_vehicle <- inner_join(registrations_all_vehicles, vehicle_wanted_engine, by = "ID_Fahrzeug")
+
+wanted_vehicle$Zulassung <- as.Date(wanted_vehicle$Zulassung, format = "%Y-%m-%d")
+
+# print answer
+print(paste("The wanted vehicle was registered in",
+            wanted_vehicle$Gemeinden[[1]],
+            "on ", 
+            format(wanted_vehicle$Zulassung[[1]], "%B, %dth %Y.")))
+
+```
+
+
