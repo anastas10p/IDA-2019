@@ -44,13 +44,7 @@ allData
 
 ```{r}
 tidy_dataset <- function(component_data){
-  
-
-  
-   
-  
-
-
+ 
 #Filter Data
 
 
