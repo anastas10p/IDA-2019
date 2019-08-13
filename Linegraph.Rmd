@@ -43,16 +43,15 @@ allData
 ```
 
 ```{r}
-tidy_dataset <- function(component_data){
- 
+
 #Filter Data
 
 
 ```{r}
 
 
-#
-RelativeFails_allComponents <- allComponents %>% # not from all components, this must change
+```
+RelativeFails_allComponents <- allComponents %>% #not from all components, this must change
   mutate(helferspalte=1)%>%
  group_by(id,factory,production_date,helferspalte)%>%
   summarise(Total=sum(faulty,na.rm=TRUE),relRatioinProzent= (Total/sum(helferspalte))*100)%>%
@@ -67,7 +66,6 @@ unique(RelativeFails_allComponents$id)
 
 #Test der Visualisierung
 ```{r}
-```
 testdataset<-filter(RelativeFails_K7,factory_number==1132)
 testdataset
 #das Jahr auswählen --> wird ja eigentlich schon vorher gefiltert
