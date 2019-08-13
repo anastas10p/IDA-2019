@@ -52,7 +52,7 @@ tidy_dataset <- function(component_data){
 
 
 #
-RelativeFails_allComponents<-allComponents%>%
+RelativeFails_allComponents <- allComponents %>% # not from all components, this must change
   mutate(helferspalte=1)%>%
  group_by(id,factory,production_date,helferspalte)%>%
   summarise(Total=sum(faulty,na.rm=TRUE),relRatioinProzent= (Total/sum(helferspalte))*100)%>%
