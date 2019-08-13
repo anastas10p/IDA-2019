@@ -42,102 +42,14 @@ if(is.data.frame(allComponents)){
 allData
 ```
 
-#Import and clean the data
-```{r}
-#später müssen dann alle Daten eingelesen werden
-
-Komponente_K7<-read.table("Data/Komponente/Komponente_K7.txt",sep="",header=TRUE)[,-c(1)]
-Komponente_K7
-
-```
-
 ```{r}
 tidy_dataset <- function(component_data){
   
-  #Drop the columns that do not interest us.
-  component_data <- select(component_data, -c(starts_with("Fehlerhaft_"), starts_with("X")))
-  #str(component_data)
-  #ID:
-  for (id_column in colnames(select(component_data, starts_with("ID")))){
-    component_data[[id_column]] <- as.character(component_data[[id_column]])
-  }
-  #Herstellernummer
-  for (producer_column in colnames(select(component_data, starts_with("Herstellernummer")))){
-    component_data[[producer_column]] <- as.integer(component_data[[producer_column]])
-  }
-  #Werksnummer
-  for (factory_column in colnames(select(component_data, starts_with("Werksnummer")))){
-    component_data[[factory_column]] <- as.integer(component_data[[factory_column]])
-  }
-  #Fehlerhaft
-  for (faulty_column in colnames(select(component_data, starts_with("Fehlerhaft")))){
-    component_data[[faulty_column]] <- as.logical(component_data[[faulty_column]])
-  }
-  #Datum
-  #If the date is set as an origin date:
-  if ("origin" %in% colnames(component_data)){
-    for (production_date_column in colnames(select(component_data, starts_with("Produktionsdatum")))){
-      component_data[[paste("Produktionsdatum", 
-                            ifelse(is.na(strsplit(production_date_column, ".", fixed = TRUE)[[1]][2]),
-                                   "", paste(".",strsplit(production_date_column, sep=".", fixed = TRUE)[[1]][2])),
-                            sep="")]] <- 
-        as.Date(component_data[[production_date_column]], origin = "1970-01-01")
-    }
-  } else {
-    for (production_date_column in colnames(select(component_data, starts_with("Produktionsdatum")))){
-      component_data[[production_date_column]] <- as.Date(component_data[[production_date_column]], format="%Y-%m-%d")
-    }
-  }
-  
-  #Create new clean columns
-  #These commands are kept separate for readability's sake.
-  
-  id_cols <- Filter(Negate(function(x) is.null(unlist(x))), 
-                    list(try(component_data[[colnames(select(component_data, starts_with("ID")))[1]]]), 
-                         try(component_data[[colnames(select(component_data, starts_with("ID")))[2]]]),
-                         try(component_data[[colnames(select(component_data, starts_with("ID")))[3]]])))
-  component_data$id <- coalesce(!!!id_cols)
-  
-  producer_cols <- Filter(Negate(function(x) is.null(unlist(x))), 
-                          list(try(component_data$Herstellernummer), 
-                               try(component_data$Herstellernummer.x), 
-                               try(component_data$Herstellernummer.y)))
-  component_data$producer_number <- coalesce(!!!producer_cols)
-  
-  factory_cols <- Filter(Negate(function(x) is.null(unlist(x))), 
-                         list(try(component_data$Werksnummer), 
-                              try(component_data$Werksnummer.x), 
-                              try(component_data$Werksnummer.y)))
-  component_data$factory_number <- coalesce(!!!factory_cols)
-  
-  date_cols <- Filter(Negate(function(x) is.null(unlist(x))), 
-                      list(try(component_data$Produktionsdatum), 
-                           try(component_data$Produktionsdatum.x),
-                           try(component_data$Produktionsdatum.y)))
-  component_data$production_date <- coalesce(!!!date_cols)
-  
-  faulty_cols <- Filter(Negate(function(x) is.null(unlist(x))), 
-                        list(try(component_data$Fehlerhaft), 
-                             try(component_data$Fehlerhaft.x), 
-                             try(component_data$Fehlerhaft.y)))
-  component_data$faulty <- coalesce(!!!faulty_cols)
-  
-  
-  #Select the new columns
-  component_data_clean <- select(component_data, "id", "producer_number", "factory_number", "faulty", "production_date")[!duplicated(component_data$id),]
-}
 
-#x4<-tidy_dataset(Komponente_K4)
-#x4
-#x5<-tidy_dataset(Komponente_K5)
-#x5
-#x6<-tidy_dataset(Komponente_K6)
-#x6
-x7<-tidy_dataset(Komponente_K7)
-rownames(x7)<-NULL
-x7
+  
+   
+  
 
-```
 
 #Filter Data
 
@@ -161,6 +73,7 @@ unique(RelativeFails_allComponents$id)
 
 #Test der Visualisierung
 ```{r}
+```
 testdataset<-filter(RelativeFails_K7,factory_number==1132)
 testdataset
 #das Jahr auswählen --> wird ja eigentlich schon vorher gefiltert
@@ -217,7 +130,12 @@ server <- function(input, output) {
       }else if(input$selectedYear == 2014){
         min=as.Date('2014-01-01')
         max=as.Date('2014-12-31')
-      }
+      }else if(input$selectedYear == 2015){
+        min=as.Date('2015-01-01')
+        max=as.Date('2015-12-31')
+      }else if(input$selectedYear == 2016){
+        min=as.Date('2016-01-01')
+        max=as.Date('2016-12-31')
      
       # Datum verbessern
       
@@ -234,7 +152,7 @@ server <- function(input, output) {
         #xlab="X-axis label", ylab="y-axix label",
         
         coord_cartesian( xlim=c(min,max))+ #scale x axis from January until December
-        labs(title="Titel des Graphen",x ="Beschriftung der X Achse ", y = "Beschriftung der Y Achse")
+        labs(title = "absolute failure figures of the component", x = " weeks", y = " failure rate") #not yet weeks must change
 
 
   }    
