@@ -17,7 +17,7 @@ tidy_dataset <- function(component_data){
     } else if (startsWith(faulty_column, "Fehlerhaft_Fahrleistung")){
       component_data[[faulty_column]] <- as.numeric(component_data[[faulty_column]])
     } else
-    component_data[[faulty_column]] <- as.logical(component_data[[faulty_column]])
+      component_data[[faulty_column]] <- as.logical(component_data[[faulty_column]])
   }
   #Produktionsatum
   #If the date is set as an origin date:
@@ -42,18 +42,18 @@ tidy_dataset <- function(component_data){
                     list(try(component_data[[colnames(select(component_data, starts_with("ID")))[1]]]), 
                          try(component_data[[colnames(select(component_data, starts_with("ID")))[2]]]),
                          try(component_data[[colnames(select(component_data, starts_with("ID")))[3]]])))
-  component_data$id <- coalesce(!!!id_cols)
+  component_data$id <- as.factor(coalesce(!!!id_cols))
   
   production_date_cols <- Filter(Negate(function(x) is.null(unlist(x))), 
-                      list(try(component_data$Produktionsdatum), 
-                           try(component_data$Produktionsdatum.x),
-                           try(component_data$Produktionsdatum.y)))
+                                 list(try(component_data$Produktionsdatum), 
+                                      try(component_data$Produktionsdatum.x),
+                                      try(component_data$Produktionsdatum.y)))
   component_data$production_date <- coalesce(!!!production_date_cols)
   
   faulty_date_cols <- Filter(Negate(function(x) is.null(unlist(x))), 
-                                 list(try(component_data$Fehlerhaft_Datum), 
-                                      try(component_data$Fehlerhaft_Datum.x),
-                                      try(component_data$Fehlerhaft_Datum.y)))
+                             list(try(component_data$Fehlerhaft_Datum), 
+                                  try(component_data$Fehlerhaft_Datum.x),
+                                  try(component_data$Fehlerhaft_Datum.y)))
   component_data$faulty_date <- coalesce(!!!faulty_date_cols)
   
   distance_cols <-  Filter(Negate(function(x) is.null(unlist(x))), 
@@ -68,16 +68,36 @@ tidy_dataset <- function(component_data){
                              try(component_data$Fehlerhaft.y)))
   component_data$faulty <- coalesce(!!!faulty_cols)
   
+  component_data$production_year <- as.factor(lubridate::year(component_data$production_date))
+  component_data$production_week <- lubridate::week(component_data$production_date)
+  
   #Fill the producer and factory column using the id data.
   component_data_clean <- component_data %>%
-    separate(id, c("name", "producer", "factory", "count"), "-") %>%
-    select(c("name", "count", "producer", "factory",  "faulty", "production_date", "faulty_date", "distance"))
+    separate(id, c("id", "producer", "factory", "count"), "-") %>%
+    select(c("id", "count", "producer", "factory",  "faulty",
+             "production_year", "production_week", "faulty_date"))
   rm(component_data)
   
-  component_data_clean$name <- as.factor(component_data_clean$name)
+  component_data_clean$id <- as.factor(component_data_clean$id)
   component_data_clean$count <- as.numeric(component_data_clean$count)
   component_data_clean$producer <- as.factor(component_data_clean$producer)
   component_data_clean$factory <- as.factor(component_data_clean$factory)
-  
-  distinct(component_data_clean)
+  component_data_clean
+  # smaller_table <- tibble(id=as.character(),
+  #                         factory=as.factor(),
+  #                         production_count=as.numeric(),
+  #                         production_year=as.factor(),
+  #                         absolute_error_frequency=as.numeric(),
+  #                         relative_error_frequency=as.numeric(),
+  #                         !!!sprintf("Week_%s", seq(1:52)))
+  # 
+  # 
+  # for (factory_ in levels(component_data_clean$factory)){
+  #   for (year_ in levels(component_data_clean$year)){
+  #     factory_year <- subset(component_data_clean, production_year == year_)
+  #     for (week in c(1:51))
+  #     abs_f_r <- sum(with(component_data_clean, production_year == year_ & faulty == TRUE))
+  #     rel_f_r <- sum(with(component_data_clean, faulty == TRUE))/sum(with(component_data_clean))
+    }
+  }
 }
