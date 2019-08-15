@@ -2,14 +2,22 @@ if(!require(shiny)){
   install.packages("shiny")
 }
 library(shiny)
+
 if(!require(ggplot2)){
   install.packages("ggplot2")
 }
 library(ggplot2)
+
+if(!require(plotly)){
+  install.packages("plotly")
+}
+library(plotly)
+
 if(!require(cowplot)){
   install.packages("cowplot")
 }
 library(cowplot)
+
 if(!require(dplyr)){
   install.packages("dplyr")
 }
@@ -74,7 +82,7 @@ ui <- fluidPage(
     #switch between rel/abs error
     selectInput("error", "Relative/Absolute Error", choices = list("Relative", "Absolute")),
     
-    plotOutput("Pareto1"),
+    plotlyOutput("Pareto1"),
     
     #checkboxes to choose factories
     checkboxGroupInput("factories", "Choose factories to show components:", unique(errors_by_id$factory), inline = TRUE),
@@ -109,7 +117,7 @@ server <- function(input, output) {
     })
     
     #Pareto diagrams to compare factories
-    output$Pareto1 <- renderPlot({
+    output$Pareto1 <- renderPlotly({
         y <- year_input()
         errors_by_factory <- filter(errors_by_factory, production_date == y)
         e <- error_input()
@@ -126,14 +134,15 @@ server <- function(input, output) {
         errors_by_factory <- errors_by_factory[order(errors_by_factory$error_data, decreasing=TRUE), ]
         errors_by_factory$factory <- factor(errors_by_factory$factory, levels= unique(errors_by_factory$factory)) 
         errors_by_factory$cum_error <- cumsum(errors_by_factory$error_data)
-        ggplot(errors_by_factory, aes(x=errors_by_factory$factory, y=errors_by_factory$error_data)) +
-          geom_bar(aes(fill = errors_by_factory$factory), stat = "identity")  +
-          scale_y_continuous(limits = c(0,ymax), sec.axis = sec_axis(~./max(errors_by_factory$cum_error/7), name = "Cumulated")) +
-          geom_point(aes(y=errors_by_factory$cum_error/7), size=2) +
-          geom_path(aes(y=errors_by_factory$cum_error/7, group=1), size=0.5) +
-          labs(title = "Errors by Factory", x = "Factories", y = ylabel) +
-          theme(legend.position="none")
-      
+        ggplotly(
+          ggplot(errors_by_factory, aes(x=errors_by_factory$factory, y=errors_by_factory$error_data)) +
+            geom_bar(aes(fill = errors_by_factory$factory), stat = "identity")  +
+            scale_y_continuous(limits = c(0,ymax), sec.axis = sec_axis(~./max(errors_by_factory$cum_error/7), name = "Cumulated")) +
+            geom_point(aes(y=errors_by_factory$cum_error/7), size=2) +
+            geom_path(aes(y=errors_by_factory$cum_error/7, group=1), size=0.5) +
+            labs(title = "Errors by Factory", x = "Factories", y = ylabel) +
+            theme(legend.position="none")
+        )
     })
     
     #Pareto diagrams to compare components
@@ -148,11 +157,17 @@ server <- function(input, output) {
         }
         if (length(plots) == 0){
             NULL
-        } else{
+        } else if (length(plots) <= 4){
             do.call(plot_grid, c(plots, nrow = 1)) 
+        } else if (length(plots) <= 8){
+            do.call(plot_grid, c(plots, nrow = 2)) 
+        } else {
+            do.call(plot_grid, c(plots, nrow = 3)) 
         }
     })
 
+    
+    
 #tried facet.grid first
 #but ordering the factors for the x-axis happens only once
     
