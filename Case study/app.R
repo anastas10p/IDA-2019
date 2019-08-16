@@ -79,6 +79,7 @@ ui <- fluidPage(
     
     tabsetPanel(type = "tabs",
                 tabPanel("Info",
+                         style = "overflow-y:scroll; max-height: 500px",
                          img(src="car.jpeg", height="70%", width="70%", align="center"),
                          p(strong("Description")),
                          p({"The present app is designed to cope with large amount of data in the automotive sector.
