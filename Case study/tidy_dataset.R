@@ -80,24 +80,8 @@ tidy_dataset <- function(component_data){
   
   component_data_clean$id <- as.factor(component_data_clean$id)
   component_data_clean$count <- as.numeric(component_data_clean$count)
-  component_data_clean$producer <- as.factor(component_data_clean$producer)
-  component_data_clean$factory <- as.factor(component_data_clean$factory)
+  component_data_clean$producer <- as.numeric(component_data_clean$producer)
+  component_data_clean$factory <- as.numeric(component_data_clean$factory)
   component_data_clean
-  # smaller_table <- tibble(id=as.character(),
-  #                         factory=as.factor(),
-  #                         production_count=as.numeric(),
-  #                         production_year=as.factor(),
-  #                         absolute_error_frequency=as.numeric(),
-  #                         relative_error_frequency=as.numeric(),
-  #                         !!!sprintf("Week_%s", seq(1:52)))
-  # 
-  # 
-  # for (factory_ in levels(component_data_clean$factory)){
-  #   for (year_ in levels(component_data_clean$year)){
-  #     factory_year <- subset(component_data_clean, production_year == year_)
-  #     for (week in c(1:51))
-  #     abs_f_r <- sum(with(component_data_clean, production_year == year_ & faulty == TRUE))
-  #     rel_f_r <- sum(with(component_data_clean, faulty == TRUE))/sum(with(component_data_clean))
-    }
-  }
+  
 }
