@@ -125,8 +125,21 @@ ui <- fluidPage(
                          plotOutput("Pareto1"),
                          
                          #checkboxes to choose factories
-                         checkboxGroupInput("factories", "Choose factories to show components:", unique(errors_by_id$factory), inline = TRUE),
-                         checkboxInput('all', 'All'),
+                         fluidRow(
+                           column(
+                             width = 9,
+                             #Checkbox for factories
+                             checkboxGroupInput("factories", "Choose factories to show components:", unique(errors_by_id$factory), inline = TRUE),
+                             checkboxInput('all', 'All')
+                           ),
+                           column(
+                             h6("Press \"Go\"-Button to display factories"),
+                             width = 3,
+                             #Go Buttom
+                             actionButton("go", "Go")
+                           )
+                         ),
+                         
                          
                          plotOutput("Pareto2")),
                          
@@ -137,7 +150,7 @@ ui <- fluidPage(
                              width = 6,
                              h4("Selection of the year"),
                              #dropdown for production year
-                             selectInput("year", "Production Year:", 
+                             selectInput("year_line", "Production Year:", 
                                          choices = 2008:2016)
                            ),
                            column(
@@ -161,8 +174,8 @@ ui <- fluidPage(
 ############ server ###############
 server <- function(input, output, session) {
     
-    #select input to filter by year
-    year_input <- reactive({
+    #select input to filter by year for pareto diagram
+    year_input <- reactive({input$year
         switch(input$year,
                "2008" = 2008,
                "2009" = 2009,
@@ -175,6 +188,22 @@ server <- function(input, output, session) {
                "2016" = 2016)
     })
     
+    
+    #Input for line diagram
+    year_line_input <- reactive({input$year_line
+      switch(input$year,
+             "2008" = 2008,
+             "2009" = 2009,
+             "2010" = 2010,
+             "2011" = 2011,
+             "2012" = 2012,
+             "2013" = 2013,
+             "2014" = 2014,
+             "2015" = 2015,
+             "2016" = 2016)
+      })
+    
+    
     error_input <- reactive({
         switch(input$error,
                "Relative" = "rel",
@@ -185,16 +214,11 @@ server <- function(input, output, session) {
     component_input <- reactive({
       input$component
       })
-    
-    observe({
-      updateCheckboxGroupInput(
-        session, 'factories', choices = unique(errors_by_id$factory), inline = TRUE,
-        selected = if (input$all)  unique(errors_by_id$factory))
-    })
-    
+   
+  
     #Pareto diagram to compare factories
     output$Pareto1 <- renderPlot({
-        y <- year_input()
+        y <- year_line_input()
         errors_by_factory <- filter(errors_by_factory, production_date == y)
         e <- error_input()
         if (e == "rel"){
@@ -219,14 +243,25 @@ server <- function(input, output, session) {
             theme(legend.position="none")
     })
     
+    
+    
+    observe({
+      updateCheckboxGroupInput(
+        session, 'factories', choices = unique(errors_by_id$factory), inline = TRUE,
+        selected = if (input$all)  unique(errors_by_id$factory))
+    })
+    
+    
+    #Delay creation of plots via go button
+    factory_plots <- eventReactive( input$go, {(input$factories)})
+    
     #Pareto diagrams to compare components
     output$Pareto2 <- renderPlot({
         y <- year_input()
         errors_by_id <- filter(errors_by_id, production_date == y)
         e <- error_input()
-        factory_plots <- input$factories
         plots <- list()
-        for (i in factory_plots){
+        for (i in factory_plots()){
             plots[[i]] <- pareto(errors_by_id,i , e)
         }
         if (length(plots) == 0){
