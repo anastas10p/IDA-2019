@@ -1,0 +1,179 @@
+if(!require(shiny)){
+  install.packages("shiny")
+}
+library(shiny)
+
+if(!require(ggplot2)){
+  install.packages("ggplot2")
+}
+library(ggplot2)
+
+if(!require(plotly)){
+  install.packages("plotly")
+}
+library(plotly)
+
+if(!require(cowplot)){
+  install.packages("cowplot")
+}
+library(cowplot)
+
+if(!require(dplyr)){
+  install.packages("dplyr")
+}
+library(dplyr)
+
+load(paste(getwd(),"/dataset_3a.RData",sep=""))
+
+#define function for plotting the pareto diagram
+pareto <- function(df, f, e){
+     
+    #filter factory
+    df <- filter(df, factory == f)
+      
+    if (e == "rel"){
+        df$error_data <- df$rel_error
+        ymax <- 0.3
+        ylabel <- "Relative Error"
+    }
+    if (e == "abs"){
+        df$error_data <- df$abs_error
+        ymax <- 25000
+        ylabel <- "Absolute Error"
+    }
+    
+    if (length(df$factory != 0)){
+        #descending order
+        df <- df[order(df$error_data, decreasing=TRUE), ]
+        
+        #make factors for x-axis
+        df$id <- factor(df$id, levels= unique(df$id))  
+        
+        
+        #new column cumulative relative error
+        df$cum_error <- cumsum(df$error_data)
+        
+        #generate the Pareto chart
+        ggplot(df, aes(x=df$id, y=df$error_data)) +
+            geom_bar(aes(fill=df$id),stat = "identity", width = length(df$id)*0.2) +
+            scale_y_continuous(limits = c(0,ymax), sec.axis = sec_axis(~./max(df$cum_error/2), name = "Cumulated")) +
+            geom_point(aes(y=df$cum_error/2), size=2) +
+            geom_path(aes(y=df$cum_error/2, group=1), size=0.5) +
+            labs(title = df$factory, x = "Components", y = ylabel) +
+            theme(legend.position="none") +
+            scale_fill_manual(values = c("K1BE1"=colors()[10], "K1BE2"=colors()[20], 
+                              "K1DI1"=colors()[50], "K2LE2"=colors()[100], "K2ST1"=colors()[30],
+                              "K2ST2"=colors()[80], "K3AG1"=colors()[70], "K3AG2"=colors()[60], "K3SG1"=colors()[50],
+                              "K3SG2"=colors()[40], "K4"=colors()[400], "K5"=colors()[450],
+                              "K6"=colors()[500], "K7"=colors()[550]))
+        }
+}
+
+############### UI ###############
+ui <- fluidPage(
+    
+    # Application title
+    headerPanel("Error Statistics: Factories and Components"),
+    
+    #dropdown for production year
+    selectInput("year", "Production Year:", 
+                choices = 2008:2016),
+    
+    #switch between rel/abs error
+    selectInput("error", "Relative/Absolute Error", choices = list("Relative", "Absolute")),
+    
+    plotlyOutput("Pareto1"),
+    
+    #checkboxes to choose factories
+    checkboxGroupInput("factories", "Choose factories to show components:", unique(errors_by_id$factory), inline = TRUE),
+    
+    plotOutput("Pareto2"),
+    #plotOutput("linediagram"),
+    dataTableOutput("dataset")
+)
+
+
+############ server ###############
+server <- function(input, output) {
+    
+    #select input to filter by year
+    year_input <- reactive({
+        switch(input$year,
+               "2008" = 2008,
+               "2009" = 2009,
+               "2010" = 2010,
+               "2011" = 2011,
+               "2012" = 2012,
+               "2013" = 2013,
+               "2014" = 2014,
+               "2015" = 2015,
+               "2016" = 2016)
+    })
+    
+    error_input <- reactive({
+        switch(input$error,
+               "Relative" = "rel",
+               "Absolute" = "abs")
+    })
+    
+    #Pareto diagrams to compare factories
+    output$Pareto1 <- renderPlotly({
+        y <- year_input()
+        errors_by_factory <- filter(errors_by_factory, production_date == y)
+        e <- error_input()
+        if (e == "rel"){
+          errors_by_factory$error_data <- errors_by_factory$rel_error
+          ymax <- 0.3
+          ylabel <- "Relative Error"
+        }
+        if (e == "abs"){
+          errors_by_factory$error_data <- errors_by_factory$abs_error
+          ymax <- 40000
+          ylabel <- "Absolute Error"
+        }
+        errors_by_factory <- errors_by_factory[order(errors_by_factory$error_data, decreasing=TRUE), ]
+        errors_by_factory$factory <- factor(errors_by_factory$factory, levels= unique(errors_by_factory$factory)) 
+        errors_by_factory$cum_error <- cumsum(errors_by_factory$error_data)
+        ggplotly(
+          ggplot(errors_by_factory, aes(x=errors_by_factory$factory, y=errors_by_factory$error_data)) +
+            geom_bar(aes(fill = errors_by_factory$factory), stat = "identity")  +
+            scale_y_continuous(limits = c(0,ymax), sec.axis = sec_axis(~./max(errors_by_factory$cum_error/7), name = "Cumulated")) +
+            geom_point(aes(y=errors_by_factory$cum_error/7), size=2) +
+            geom_path(aes(y=errors_by_factory$cum_error/7, group=1), size=0.5) +
+            labs(title = "Errors by Factory", x = "Factories", y = ylabel) +
+            theme(legend.position="none")
+        )
+    })
+    
+    #Pareto diagrams to compare components
+    output$Pareto2 <- renderPlot({
+        y <- year_input()
+        errors_by_id <- filter(errors_by_id, production_date == y)
+        e <- error_input()
+        factory_plots <- input$factories
+        plots <- list()
+        for (i in factory_plots){
+            plots[[i]] <- pareto(errors_by_id,i , e)
+        }
+        if (length(plots) == 0){
+            NULL
+        } else if (length(plots) <= 4){
+            do.call(plot_grid, c(plots, nrow = 1)) 
+        } else if (length(plots) <= 8){
+            do.call(plot_grid, c(plots, nrow = 2)) 
+        } else {
+            do.call(plot_grid, c(plots, nrow = 3)) 
+        }
+    })
+
+    
+    
+#tried facet.grid first
+#but ordering the factors for the x-axis happens only once
+    
+    #Show the basic dataset
+     output$dataset <- renderDataTable(errors_by_id, options = list(pageLength = 10))
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
