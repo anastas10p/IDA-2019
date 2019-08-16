@@ -73,24 +73,88 @@ pareto <- function(df, f, e){
 ui <- fluidPage(
     
     # Application title
-    headerPanel("Error Statistics: Factories and Components"),
+    titlePanel(title=div("Error Statistics: Factories and Components",img(src="images.png", height="20%", width="20%", align="right"))),
     
-    #dropdown for production year
-    selectInput("year", "Production Year:", 
-                choices = 2008:2016),
     
-    #switch between rel/abs error
-    selectInput("error", "Relative/Absolute Error", choices = list("Relative", "Absolute")),
     
-    plotOutput("Pareto1"),
+    tabsetPanel(type = "tabs",
+                tabPanel("Info",
+                         img(src="car.jpeg", height="70%", width="70%", align="center"),
+                         p(strong("Description")),
+                         p({"The present app is designed to cope with large amount of data in the automotive sector.
+                           It helps identifying suppliers of certain components which have high error rates (absolute and relative)."}),
+                         br(),
+                         p(strong("Pareto Plots")),
+                         p({"In the tab \"Pareto Plots\", you can generate Pareto digrams which sort the factory and components, respectively in a descending order.
+                           The upper Pareto diagram displays the error rates of the factory as a whole, meaning that
+                           there is no distinction between the manufactured components within the factory. Beneath the 
+                           Pareto diagram, you have the possibility to manually select individual factories in order to 
+                           have a more detailed look on a component-sharp resolution."}),
+                         br(),
+                         p(strong("Error on component-sharp resolution")),
+                         p({"In the tab \"Error on component-sharp resolution\", you can select certain components in order to examine the distribution of 
+                           absolute errors over the selcted time frame."}),
+                         br(),
+                         p(strong("Dataset")),
+                         p({"The tab \"Dataset\" displays a browsable table of the dataset that is used to generate the plots."})
+                         
+                ),
+                
+                
+                tabPanel("Pareto Plots", 
+                         #Scrollable tab
+                         style = "overflow-y:scroll; max-height: 500px",
+                         
+                         
+                         fluidRow(
+                           column(
+                             width = 6,
+                             h4("Selection of the year"),
+                             #dropdown for production year
+                             selectInput("year", "Production Year:", 
+                                         choices = 2008:2016)
+                           ),
+                           column(
+                             width = 6,
+                             h4("Selction of error type"),
+                             #switch between rel/abs error
+                             selectInput("error", "Relative/Absolute Error", choices = list("Relative", "Absolute"))
+                           )
+                         ),
+                         
+                         plotOutput("Pareto1"),
+                         
+                         #checkboxes to choose factories
+                         checkboxGroupInput("factories", "Choose factories to show components:", unique(errors_by_id$factory), inline = TRUE),
+                         checkboxInput('all', 'All'),
+                         
+                         plotOutput("Pareto2")),
+                         
+                tabPanel("Error on component-sharp resolution",
+                         
+                         fluidRow(
+                           column(
+                             width = 6,
+                             h4("Selection of the year"),
+                             #dropdown for production year
+                             selectInput("year", "Production Year:", 
+                                         choices = 2008:2016)
+                           ),
+                           column(
+                             width = 6,
+                             h4("Selection of the component"),
+                             #switch between rel/abs error
+                             selectInput("component", "Select component for detailed error plot", choices = c("All", errors_by_id$id))
+                           )
+                         ),
+                         
+                         plotOutput("Linediagram")),
+                
+                
+                tabPanel("Dataset", dataTableOutput("dataset"))
+              
     
-    #checkboxes to choose factories
-    checkboxGroupInput("factories", "Choose factories to show components:", unique(errors_by_id$factory), inline = TRUE),
-    checkboxInput('all', 'All'),
-    
-    plotOutput("Pareto2"),
-    #plotOutput("linediagram"),
-    dataTableOutput("dataset")
+  )
 )
 
 
@@ -116,6 +180,8 @@ server <- function(input, output, session) {
                "Relative" = "rel",
                "Absolute" = "abs")
     })
+    
+    component_input <- reactive({input$component})
     
     observe({
       updateCheckboxGroupInput(
@@ -171,6 +237,19 @@ server <- function(input, output, session) {
         }
     })
 
+    
+    
+    output$Linediagram <- renderPlot({
+      selected_component <- input$component
+      if(selected_component == "All"){
+        NULL
+        print("All")
+      }else{
+        print("Linediagram") 
+        #LinediagramPLOT insert here
+      }
+    })
+      
     
     
 #tried facet.grid first
