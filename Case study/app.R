@@ -63,7 +63,7 @@ pareto <- function(df, f, e){
             theme(legend.position="none") +
             scale_fill_manual(values = c("K1BE1"=colors()[10], "K1BE2"=colors()[20], 
                               "K1DI1"=colors()[50], "K2LE2"=colors()[100], "K2ST1"=colors()[30],
-                              "K2ST2"=colors()[80], "K3AG1"=colors()[70], "K3AG2"=colors()[60], "K3SG1"=colors()[50],
+                              "K2ST2"=colors()[80], "K3AG1"=colors()[70], "K3AG2"=colors()[60], "K3SG1"=colors()[90],
                               "K3SG2"=colors()[40], "K4"=colors()[400], "K5"=colors()[450],
                               "K6"=colors()[500], "K7"=colors()[550]))
         }
@@ -82,10 +82,11 @@ ui <- fluidPage(
     #switch between rel/abs error
     selectInput("error", "Relative/Absolute Error", choices = list("Relative", "Absolute")),
     
-    plotlyOutput("Pareto1"),
+    plotOutput("Pareto1"),
     
     #checkboxes to choose factories
     checkboxGroupInput("factories", "Choose factories to show components:", unique(errors_by_id$factory), inline = TRUE),
+    checkboxInput('all', 'All'),
     
     plotOutput("Pareto2"),
     #plotOutput("linediagram"),
@@ -94,7 +95,7 @@ ui <- fluidPage(
 
 
 ############ server ###############
-server <- function(input, output) {
+server <- function(input, output, session) {
     
     #select input to filter by year
     year_input <- reactive({
@@ -116,14 +117,20 @@ server <- function(input, output) {
                "Absolute" = "abs")
     })
     
-    #Pareto diagrams to compare factories
-    output$Pareto1 <- renderPlotly({
+    observe({
+      updateCheckboxGroupInput(
+        session, 'factories', choices = unique(errors_by_id$factory), inline = TRUE,
+        selected = if (input$all)  unique(errors_by_id$factory))
+    })
+    
+    #Pareto diagram to compare factories
+    output$Pareto1 <- renderPlot({
         y <- year_input()
         errors_by_factory <- filter(errors_by_factory, production_date == y)
         e <- error_input()
         if (e == "rel"){
           errors_by_factory$error_data <- errors_by_factory$rel_error
-          ymax <- 0.3
+          ymax <- 0.25
           ylabel <- "Relative Error"
         }
         if (e == "abs"){
@@ -134,15 +141,13 @@ server <- function(input, output) {
         errors_by_factory <- errors_by_factory[order(errors_by_factory$error_data, decreasing=TRUE), ]
         errors_by_factory$factory <- factor(errors_by_factory$factory, levels= unique(errors_by_factory$factory)) 
         errors_by_factory$cum_error <- cumsum(errors_by_factory$error_data)
-        ggplotly(
-          ggplot(errors_by_factory, aes(x=errors_by_factory$factory, y=errors_by_factory$error_data)) +
+        ggplot(errors_by_factory, aes(x=errors_by_factory$factory, y=errors_by_factory$error_data)) +
             geom_bar(aes(fill = errors_by_factory$factory), stat = "identity")  +
-            scale_y_continuous(limits = c(0,ymax), sec.axis = sec_axis(~./max(errors_by_factory$cum_error/7), name = "Cumulated")) +
-            geom_point(aes(y=errors_by_factory$cum_error/7), size=2) +
-            geom_path(aes(y=errors_by_factory$cum_error/7, group=1), size=0.5) +
+            scale_y_continuous(limits = c(0,ymax), sec.axis = sec_axis(~./max(errors_by_factory$cum_error/9), name = "Cumulated")) +
+            geom_point(aes(y=errors_by_factory$cum_error/9), size=2) +
+            geom_path(aes(y=errors_by_factory$cum_error/9, group=1)) +
             labs(title = "Errors by Factory", x = "Factories", y = ylabel) +
             theme(legend.position="none")
-        )
     })
     
     #Pareto diagrams to compare components
@@ -172,7 +177,7 @@ server <- function(input, output) {
 #but ordering the factors for the x-axis happens only once
     
     #Show the basic dataset
-     output$dataset <- renderDataTable(errors_by_id, options = list(pageLength = 10))
+     output$dataset <- renderDataTable(rename(errors_by_id, component = id), options = list(pageLength = 10))
 }
 
 # Run the application 
