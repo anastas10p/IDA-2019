@@ -144,7 +144,7 @@ ui <- fluidPage(
                              width = 6,
                              h4("Selection of the component"),
                              #switch between rel/abs error
-                             selectInput("component", "Select component for detailed error plot", choices = c("All", errors_by_id$id))
+                             selectInput("component", "Select component for detailed error plot", choices = errors_by_id$id)
                            )
                          ),
                          
@@ -181,7 +181,10 @@ server <- function(input, output, session) {
                "Absolute" = "abs")
     })
     
-    component_input <- reactive({input$component})
+    
+    component_input <- reactive({
+      input$component
+      })
     
     observe({
       updateCheckboxGroupInput(
@@ -240,14 +243,19 @@ server <- function(input, output, session) {
     
     
     output$Linediagram <- renderPlot({
+      validate(
+        need(input$component, "Please select a component"))
       selected_component <- input$component
-      if(selected_component == "All"){
-        NULL
-        print("All")
-      }else{
-        print("Linediagram") 
-        #LinediagramPLOT insert here
-      }
+      total_error_data <- errors_by_id %>%
+        group_by(id, production_date) %>% 
+        summarise(total_error = sum(abs_error))
+      df <- errors_by_id %>%
+        left_join(total_error_data, by = c("id","production_date")) %>%
+        filter(id == selected_component)
+      ggplot(df, aes(x = df$production_date, group = df$factory)) +
+        geom_line(aes(y = df$abs_error, color = df$factory)) +
+        geom_line(aes(y = df$total_error, color = "total")) +
+        labs(x = "Production Date", y = "Absolute Error", color = "Factory")
     })
       
     
