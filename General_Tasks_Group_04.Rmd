@@ -167,7 +167,7 @@ Which  data  types do the  attributes  of  the  registration  table "Zulassungen
 str(registration_all_vehicles)
 ```
 function str () gives us the structure of the table and therefore the attributes we need.
-In the registration table exists four attributes: X, IDNummer, Gemeinden und Zulassung; and  three types : character, date and double 
+In the registration table exists three attributes:  IDNummer, Gemeinden und Zulassung and one type : factor 
 
 
 #Task 5
