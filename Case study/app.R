@@ -33,7 +33,7 @@ ui <- fluidPage(
     
     tabsetPanel(type = "tabs",
                 tabPanel("Info",
-                         img(src="car.jpeg", height="70%", width="70%", align="center"),
+                         img(src="car.jpeg", height="40%", width="40%", align="center"),
                          p(strong("Description")),
                          p({"The present app is designed to cope with large amount of data in the automotive sector.
                            It helps identifying suppliers of certain components which have high error rates (absolute and relative)."}),
@@ -64,7 +64,7 @@ ui <- fluidPage(
                              h4("Selection of the year"),
                              #dropdown for production year
                              selectInput("year", "Production Year:", 
-                                         choices = errors_by_id$production_date, selected = TRUE)
+                                         choices = errors_by_id$production_year, selected = TRUE)
                            ),
                            column(
                              width = 6,
@@ -103,7 +103,7 @@ ui <- fluidPage(
                              h4("Selection of the year"),
                              #dropdown for production year
                              selectInput("year_line", "Production Year:", 
-                                         choices = errors_by_id$production_date, selected = TRUE)
+                                         choices = errors_by_id$production_year, selected = TRUE)
                            ),
                            column(
                              width = 6,
@@ -145,7 +145,7 @@ server <- function(input, output, session) {
     #Pareto diagram to compare factories
     output$Pareto1 <- renderPlot({
         y <- year_input()
-        errors_by_factory <- filter(errors_by_factory, production_date == y)
+        errors_by_factory <- filter(errors_by_factory, production_year == y)
         e <- error_input()
         if (e == "rel"){
           errors_by_factory$error_data <- errors_by_factory$rel_error
@@ -222,8 +222,8 @@ server <- function(input, output, session) {
             geom_path(aes(y=df$cum_error/2, group=1), size=0.5) +
             labs(title = df$factory, x = "Components", y = ylabel) +
             theme(legend.position="none", aspect.ratio=1) +
-            scale_fill_manual(values = c("K1BE1"=colors()[10], "K1BE2"=colors()[20], 
-                                         "K1DI1"=colors()[50], "K2LE2"=colors()[100], "K2ST1"=colors()[30],
+            scale_fill_manual(values = c("K1BE1"=colors()[10], "K1BE2"=colors()[20], "K1DI1"=colors()[50], "K1DI2"=colors()[55],
+                                         "K2LE1"=colors()[65], "K2LE2"=colors()[100], "K2ST1"=colors()[30],
                                          "K2ST2"=colors()[80], "K3AG1"=colors()[70], "K3AG2"=colors()[60], "K3SG1"=colors()[90],
                                          "K3SG2"=colors()[40], "K4"=colors()[400], "K5"=colors()[450],
                                          "K6"=colors()[500], "K7"=colors()[550]))
@@ -231,7 +231,7 @@ server <- function(input, output, session) {
       }
       
         y <- year_input()
-        errors_by_id <- filter(errors_by_id, production_date == y)
+        errors_by_id <- filter(errors_by_id, production_year == y)
         e <- error_input()
         plots <- list()
         for (i in factory_plots()){
