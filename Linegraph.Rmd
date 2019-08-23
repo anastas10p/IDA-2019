@@ -44,13 +44,6 @@ allData
 
 ```{r}
 
-#Filter Data
-
-
-```{r}
-
-
-```
 RelativeFails_allComponents <- allComponents %>% #not from all components, this must change
   mutate(helferspalte=1)%>%
  group_by(id,factory,production_date,helferspalte)%>%
@@ -95,10 +88,9 @@ ui <- fluidPage(
 server <- function(input, output) {
   output$plot <- renderPlot({
 
-      #filter the dataset for the selected year and component (DAS MUSS noch geändert werden; ist viel zu langsam)
-      filterperyear<-filter(RelativeFails_allComponents,grepl(input$selectedYear,production_date)==TRUE&grepl(input$selectedComponent,id)==TRUE)
-     
-      
+      #filter the dataset for the selected year and component 
+     filterperyear<-filter(RelativeFails_allComponents,grepl(input$selectedYear,production_date)==TRUE&grepl(input$selectedComponent,id)==TRUE)
+   
       #brauche ich um die X Achse zu skalieren; noch unschön
       if(input$selectedYear == 2008){
         min=as.Date('2008-01-01')
@@ -128,21 +120,18 @@ server <- function(input, output) {
       }else if(input$selectedYear == 2016){
         min=as.Date('2016-01-01')
         max=as.Date('2016-12-31')
-     
+        }
       # Datum verbessern
-      
-      
+     
         gesamt<-filterperyear%>%
-          group_by(production_date)%>%
-          arrange(production_date)#arrange eigentlich unnötig???
-      
-        newdata<-filterperyear
-         
-        ggplot()+
-        geom_line(data=newdata,aes(production_date,Total,colour=factory))+
-        #es fehlt noch die Summe
-        #xlab="X-axis label", ylab="y-axix label",
+        group_by(production_date)%>%
+        summarise(Total=sum(Total))
         
+        #2012 K1BE1 zum Prüfen nehmen die Summe müsste bei ca. 80 liegen 50+20+10 passt
+        
+        ggplot()+
+        geom_line(data=filterperyear,aes(production_date,Total,colour=factory))+
+        geom_line(data=gesamt,aes(production_date,Total),position=position_dodge(width=1.2))+
         coord_cartesian( xlim=c(min,max))+ #scale x axis from January until December
         labs(title = "absolute failure figures of the component", x = " weeks", y = " failure rate") #not yet weeks must change
 
