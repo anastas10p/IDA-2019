@@ -29,7 +29,7 @@ K2le1 <- tidy_dataset(read.delim(text = K2le1, header = TRUE , sep = ' '))
 #K3
 
 k3ag1 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K3AG1.csv",sep = ""), header = TRUE, ","))#ok
-k3ag2 <- read.delim(paste("Data/Komponente/Komponente_K3AG2.txt", sep = ""), header = TRUE, "\\")#ok
+k3ag2 <- tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K3AG2.txt", sep = ""), header = TRUE, "\\"))#ok
 k3sg1 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K3SG1.csv",sep = ""), header = TRUE, ","))#ok
 k3sg2 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K3SG2.csv",sep = ""), header = TRUE, ","))#ok
 
