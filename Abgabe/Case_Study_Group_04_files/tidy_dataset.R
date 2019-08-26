@@ -100,13 +100,12 @@ tidy_dataset <- function(component_data) {
   component_data_clean <- component_data %>%
     separate(id, c("id", "producer", "factory", "count"), "-") %>%
     select(c(
-      "id", "count", "producer", "factory", "faulty",
+      "id", "producer", "factory", "faulty",
       "production_year", "production_week", "faulty_date"
     ))
   rm(component_data)
 
   component_data_clean$id <- as.factor(component_data_clean$id)
-  component_data_clean$count <- as.numeric(component_data_clean$count)
   component_data_clean$producer <- as.numeric(component_data_clean$producer)
   component_data_clean$factory <- as.numeric(component_data_clean$factory)
   component_data_clean
