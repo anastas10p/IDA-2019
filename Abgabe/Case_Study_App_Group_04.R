@@ -20,14 +20,14 @@ if (!require(dplyr)) {
 library(dplyr)
 
 
-load(paste(getwd(), "/dataset_app.RData", sep = ""))
-
+load(paste(getwd(), "/Additional_files_Group_04/dataset_app.RData", sep = ""))
+addResourcePath(prefix = "resources", directoryPath = "./Additional_files_Group_04")
 
 ############### UI ###############
 ui <- fluidPage(
 
   # Application title
-  titlePanel(title = div("Error Statistics: Factories and Components", img(src = "images.png", height = "20%", width = "20%", align = "right"))),
+  titlePanel(title = div("Error Statistics: Factories and Components", img(src = "resources/images.png", height = "20%", width = "20%", align = "right"))),
 
 
 
@@ -35,7 +35,7 @@ ui <- fluidPage(
     type = "tabs",
     tabPanel(
       "Info",
-      img(src = "car.jpeg", height = "40%", width = "40%", align = "center"),
+      img(src = "resources/car.jpeg", height = "40%", width = "40%", align = "center"),
       p(strong("Description")),
       p({
         "The present app is designed to cope with large amount of data in the automotive sector.
@@ -282,13 +282,8 @@ server <- function(input, output, session) {
     )
     selected_component <- component_input()
     selected_year <- year_line_input()
-    total_error_data <- errors_by_id_week[[selected_component]] %>%
-      filter(production_year == selected_year) %>%
-      group_by(production_week) %>%
-      summarise(total_error = sum(abs_error))
     df <- data.frame(errors_by_id_week[[selected_component]]) %>%
-      filter(production_year == selected_year) %>%
-      left_join(data.frame(total_error_data), by = c("production_week"))
+      filter(production_year == selected_year)
     df$factory <- factor(df$factory)
     ggplot(df, aes(x = df$production_week, group = df$factory)) +
       geom_line(aes(y = df$abs_error, color = df$factory), size = 1) +
@@ -297,10 +292,6 @@ server <- function(input, output, session) {
       labs(x = "Production Week", y = "Absolute Error", color = "Factory")
   })
 
-
-
-  # tried facet.grid first
-  # but ordering the factors for the x-axis happens only once
 
   # Show the basic dataset
   output$dataset <- renderDataTable(rename(errors_by_id, component = id), options = list(pageLength = 10))
