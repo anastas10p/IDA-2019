@@ -1,11 +1,31 @@
 ---
-title: "Case_Study_Group_04"
+title: "Case Study"
+date: "31 August 2019"
 output: html_document
 ---
+
+<center>
+**Group 04 members:**
+</center>
+<center> 
+Philipp Herpich, Marina Matthaiou, Daniel Schewitz, Tatjana Stefanie Spanehl, Anastasios Tsigkros
+</center>
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
+```
+
+## Packages
+
+Preparatory steps: In the beginning we will install the required packages.
+We will use the `tidyverse` package.
+```{r  results='hide', message=FALSE}
+
+
+if( !require(tidyverse)){
+  install.packages("tidyverse")
+}
 library(tidyverse)
 ```
 
@@ -212,3 +232,44 @@ save(errors_by_factory, errors_by_id, errors_by_id_week, file = "dataset_app.RDa
 These steps result in our final dataset and we can start our analysis.
 
 ## Analysis
+In the following we look at the visualisation of our dataset to decide, where the next inspection should be carried out. Therefore we will especially focus on the most recent data of the year 2016 and on the relative error figures because they are more meaningfull than the absolute error figures for evaluating the quality of a production process.
+Overall the highest error rate of all factories occurs at factory 1111 with approximately 20% error rate. 
+
+![](Additional_files_Group_04/screenshots/factory_pareto_2016_rel.PNG "Factories Relative")
+
+This factory produces the components K2LE1 and K2LE2. The component K2LE1 was produced at the factory 1091 until the year 2012 with less than half the error rate.
+
+![](Additional_files_Group_04/screenshots/comp_k2le1_rel_2012.PNG "K2LE1 Relative")
+
+After the year 2012 the factory 1091 has been producing the component K2LE2 again with less than 10% error rate.
+
+![](Additional_files_Group_04/screenshots/comp_k2le2_rel.PNG "K2LE2 Relative")
+
+This means that the production process of factory 1111 needs to be optimised, because the high error rate is not dependent on the product but on the factory.
+
+Factory 1041 has the third highest absolute error count and has also the third highest error rate as shown in the two  Pareto diagrams above and below. 
+
+![](Additional_files_Group_04/screenshots/factory_pareto_2016_abs.PNG "Factories Absolute")
+
+The factory produces the components K1BE1, K1BE2 and K1D1. 
+The error rates for these components are similar in all producing factories. 
+
+![](Additional_files_Group_04/screenshots/comp_k1be1_k1be2_rel.PNG "K1BE1 and K1BE2 Relative")
+
+On the graphs of both components you can see that the absolute errors are fairly constant over the year and the factory 1041 is the most relevant factory in this regard.
+
+![](Additional_files_Group_04/screenshots/comp_k1be1_year.PNG "K1BE1 Year")
+
+![](Additional_files_Group_04/screenshots/comp_k1be2_year.PNG "K1BE2 Year")
+
+However the relative error rates of K1BE1 and K1BE2 are very high in every factory compared to other components which indicates that an inspection of these product groups seems to be necessary regardless of the factories producing it.
+
+Another component which stands out is the component K3AG1 with an error rate of 20% at the factory 1051 and only about 10% percent at the two other factories 1061 and 1082. This indicates to inspect the production line for this component at the factory 1051.
+
+![](Additional_files_Group_04/screenshots/comp_k3ag1_rel.PNG "K3AG1 Relative")
+
+In conclusion we found three different opportunities for optimisation. The biggest potential for lowering the overall error rates we see at the factory 1111, so we would decide to carry out the next inspection there and do a comprehensive process inspection.
+
+
+
+

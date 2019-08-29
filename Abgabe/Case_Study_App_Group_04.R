@@ -248,7 +248,7 @@ server <- function(input, output, session) {
           theme(legend.position = "none", aspect.ratio = 1) +
           scale_fill_manual(values = c(
             "K1BE1" = colors()[10], "K1BE2" = colors()[20], "K1DI1" = colors()[50], "K1DI2" = colors()[55],
-            "K2LE1" = colors()[65], "K2LE2" = colors()[100], "K2ST1" = colors()[30],
+            "K2LE1" = colors()[95], "K2LE2" = colors()[100], "K2ST1" = colors()[30],
             "K2ST2" = colors()[80], "K3AG1" = colors()[70], "K3AG2" = colors()[60], "K3SG1" = colors()[90],
             "K3SG2" = colors()[40], "K4" = colors()[400], "K5" = colors()[450],
             "K6" = colors()[500], "K7" = colors()[550]
