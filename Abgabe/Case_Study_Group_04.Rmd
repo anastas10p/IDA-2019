@@ -231,8 +231,10 @@ save(errors_by_factory, errors_by_id, errors_by_id_week, file = "dataset_app.RDa
 
 These steps result in our final dataset and we can start our analysis.
 
-## Analysis
-In the following we look at the visualisation of our dataset to decide, where the next inspection should be carried out. Therefore we will especially focus on the most recent data of the year 2016 and on the relative error figures because they are more meaningfull than the absolute error figures for evaluating the quality of a production process.
+## Analysis  
+In the following we look at the visualisation of our dataset to decide, where the next inspection should be carried out. Therefore we will especially focus on the most recent data and on the relative error figures because they are more meaningfull than the absolute error figures for evaluating the quality of a production process. The used graphs are from 2016 if not stated otherwise. These can be taken as exemplary for all years, because the data has very little deviation between the different years.
+
+**Option 1**  
 Overall the highest error rate of all factories occurs at factory 1111 with approximately 20% error rate. 
 
 ![](Additional_files_Group_04/screenshots/factory_pareto_2016_rel.PNG "Factories Relative")
@@ -247,7 +249,8 @@ After the year 2012 the factory 1091 has been producing the component K2LE2 agai
 
 This means that the production process of factory 1111 needs to be optimised, because the high error rate is not dependent on the product but on the factory.
 
-Factory 1041 has the third highest absolute error count and has also the third highest error rate as shown in the two  Pareto diagrams above and below. 
+**Option 2**  
+Factory 1041 has the third highest error rate with 15%.  It is very relevant for the overall production volume because it also has the third highest absolute error count. In year 2016 it produced 25000 faulty components which is significantly more than the 10000 of factory 1111.
 
 ![](Additional_files_Group_04/screenshots/factory_pareto_2016_abs.PNG "Factories Absolute")
 
@@ -264,10 +267,12 @@ On the graphs of both components you can see that the absolute errors are fairly
 
 However the relative error rates of K1BE1 and K1BE2 are very high in every factory compared to other components which indicates that an inspection of these product groups seems to be necessary regardless of the factories producing it.
 
+**Option 3**  
 Another component which stands out is the component K3AG1 with an error rate of 20% at the factory 1051 and only about 10% percent at the two other factories 1061 and 1082. This indicates to inspect the production line for this component at the factory 1051.
 
 ![](Additional_files_Group_04/screenshots/comp_k3ag1_rel.PNG "K3AG1 Relative")
 
+**Conclusion**  
 In conclusion we found three different opportunities for optimisation. The biggest potential for lowering the overall error rates we see at the factory 1111, so we would decide to carry out the next inspection there and do a comprehensive process inspection.
 
 
