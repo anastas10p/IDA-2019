@@ -12,27 +12,30 @@ Philipp Herpich, Marina Matthaiou, Daniel Schewitz, Tatjana Stefanie Spanehl, An
 </center>
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
 
 ```
 
 ## Packages
 
-Preparatory steps: In the beginning we will install the required packages.
-We will use the `tidyverse` package.
+
+We will use the `tidyverse` package to clean up our data, and the 'shiny' package to visualize the data.
 ```{r  results='hide', message=FALSE}
-
-
 if( !require(tidyverse)){
   install.packages("tidyverse")
 }
 library(tidyverse)
+
+if (!require(shiny)) {
+  install.packages("shiny")
+}
+library(shiny)
 ```
 
 ## Import and Tidy
-The necessary files are imported using the read.delim function. The data from each file is transformed into a tidy dataset by our function tidy_dataset which is defined before. After that we have clean tables with only the necessary variables as coloumns and all observations as rows. Every file is transformed to a dataset with matching coloumns so they can easily be combined and prepared for plotting.
+The necessary files are imported using the read.delim function. The data from each file is transformed into a tidy dataset by our function tidy_dataset. We get uniform data which allows an easier data manipulation and visualization. 
 
-```{r tidy_dataset, eval=FALSE}
+```{r tidy_dataset}
 
 tidy_dataset <- function(component_data) {
   
@@ -151,7 +154,7 @@ tidy_dataset <- function(component_data) {
 
 The data of every component file is stored in a seperate tibble.
 
-```{r import, eval=FALSE}
+```{r import, eval = FALSE}
 
 component_tibbles <- vector(mode = "list", length = 16)
 names(component_tibbles) <- c(
@@ -159,7 +162,9 @@ names(component_tibbles) <- c(
   "K2LE1", "K2LE2", "K2ST1", "K2ST2",
   "K3AG1", "K3AG2", "K3SG1", "K3SG2",
   "K4", "K5", "K6", "K7")
-
+```
+Some files had formats that allowed a direct reading, while others needed some preparation. 
+```{r reading the files, eval = FALSE}
 #read data using read.delim and the separators 
 #K1
 component_tibbles$K1BE1 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K1BE1.csv",sep = ""), head = TRUE, ","))
@@ -197,10 +202,9 @@ component_tibbles$K7 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponen
 
 
 ```
+Having read the data we produce three different dataframes for our analysis.
 
-The data is transformed into three different dataframes for the three plotting tasks.
-
-```{r prepare, eval=FALSE}
+```{r prepare, eval = FALSE}
 
 #dataframes for app
 errors_by_id <- component_tibbles
@@ -223,58 +227,274 @@ for (component in 1:length(errors_by_id_week)){
     group_by(production_year, production_week) %>%
     mutate(total_error = sum(abs_error))
 }
+```
+These steps result in our final dataset and we can start our analysis. We save the generated data in an .RData file.
 
+``` {r save data, eval = FALSE}
 save(errors_by_factory, errors_by_id, errors_by_id_week, file = "dataset_app.RData")
+```
 
+
+## Analysis  
+In the following we look at the visualisation of our dataset to decide, where the next inspection should be carried out. We will be examining the last three years of production for which we have data, i.e. 2014, 2015 and 2016. We will look at the absolute and relative error rates of the factories, and then. For our visualization we use slight modifications of our Shiny application, therefore we import the shiny library and load the relevant data.
+
+```{r data, echo = TRUE}
+load("Additional_files_Group_04/dataset_app.RData")
+```
+
+**Absolute error rate**  
+We produce the Pareto plots displaying the absolute error rates for the years we observe. Year selection has been limited, for a look outside this timeframe, refer to the Shiny application. 
+
+```{r Absolute error rates, echo=FALSE}
+
+# Pareto diagram to compare factories
+#Data for 2014
+y <- 2014
+errors_by_factory_2014 <- filter(errors_by_factory, production_year == y)
+errors_by_factory_2014$error_data <- errors_by_factory_2014$abs_error
+ymax <- 40000
+sec_axis_factor <- 6
+ylabel <- "Absolute Error"
+errors_by_factory_2014 <- errors_by_factory_2014[order(errors_by_factory_2014$error_data, decreasing = TRUE), ]
+errors_by_factory_2014$factory <- factor(errors_by_factory_2014$factory, levels = unique(errors_by_factory_2014$factory))
+errors_by_factory_2014$cum_error <- cumsum(errors_by_factory_2014$error_data)
+ggplot(errors_by_factory_2014, aes(x = errors_by_factory_2014$factory, y = errors_by_factory_2014$error_data)) +
+  geom_bar(aes(fill = errors_by_factory_2014$factory), stat = "identity") +
+  scale_y_continuous(limits = c(0, ymax), sec.axis = sec_axis(~ . / max(errors_by_factory_2014$cum_error / sec_axis_factor), name = "Cumulated")) +
+  geom_point(aes(y = errors_by_factory_2014$cum_error / sec_axis_factor), size = 2) +
+  geom_path(aes(y = errors_by_factory_2014$cum_error / sec_axis_factor, group = 1)) +
+  geom_hline(yintercept = max(errors_by_factory_2014$cum_error / sec_axis_factor), linetype = "dashed") +
+  labs(title = "Errors by factory for 2014", x = "Factories", y = ylabel) +
+  theme(legend.position = "none")
+
+#Data for 2015
+y <- 2015
+errors_by_factory_2015 <- filter(errors_by_factory, production_year == y)
+errors_by_factory_2015$error_data <- errors_by_factory_2015$abs_error
+ymax <- 40000
+sec_axis_factor <- 6
+ylabel <- "Absolute Error"
+errors_by_factory_2015 <- errors_by_factory_2015[order(errors_by_factory_2015$error_data, decreasing = TRUE), ]
+errors_by_factory_2015$factory <- factor(errors_by_factory_2015$factory, levels = unique(errors_by_factory_2015$factory))
+errors_by_factory_2015$cum_error <- cumsum(errors_by_factory_2015$error_data)
+ggplot(errors_by_factory_2015, aes(x = errors_by_factory_2015$factory, y = errors_by_factory_2015$error_data)) +
+  geom_bar(aes(fill = errors_by_factory_2015$factory), stat = "identity") +
+  scale_y_continuous(limits = c(0, ymax), sec.axis = sec_axis(~ . / max(errors_by_factory_2015$cum_error / sec_axis_factor), name = "Cumulated")) +
+  geom_point(aes(y = errors_by_factory_2015$cum_error / sec_axis_factor), size = 2) +
+  geom_path(aes(y = errors_by_factory_2015$cum_error / sec_axis_factor, group = 1)) +
+  geom_hline(yintercept = max(errors_by_factory_2015$cum_error / sec_axis_factor), linetype = "dashed") +
+  labs(title = "Errors by factory for 2015", x = "Factories", y = ylabel) +
+  theme(legend.position = "none")
+#Data for 2016
+y <- 2016
+errors_by_factory_2016 <- filter(errors_by_factory, production_year == y)
+errors_by_factory_2016$error_data <- errors_by_factory_2016$abs_error
+ymax <- 40000
+sec_axis_factor <- 6
+ylabel <- "Absolute Error"
+errors_by_factory_2016 <- errors_by_factory_2016[order(errors_by_factory_2016$error_data, decreasing = TRUE), ]
+errors_by_factory_2016$factory <- factor(errors_by_factory_2016$factory, levels = unique(errors_by_factory_2016$factory))
+errors_by_factory_2016$cum_error <- cumsum(errors_by_factory_2016$error_data)
+ggplot(errors_by_factory_2016, aes(x = errors_by_factory_2016$factory, y = errors_by_factory_2016$error_data)) +
+  geom_bar(aes(fill = errors_by_factory_2016$factory), stat = "identity") +
+  scale_y_continuous(limits = c(0, ymax), sec.axis = sec_axis(~ . / max(errors_by_factory_2016$cum_error / sec_axis_factor), name = "Cumulated")) +
+  geom_point(aes(y = errors_by_factory_2016$cum_error / sec_axis_factor), size = 2) +
+  geom_path(aes(y = errors_by_factory_2016$cum_error / sec_axis_factor, group = 1)) +
+  geom_hline(yintercept = max(errors_by_factory_2016$cum_error / sec_axis_factor), linetype = "dashed") +
+  labs(title = "Errors by factory for 2016", x = "Factories", y = ylabel) +
+  theme(legend.position = "none")
 
 ```
 
-These steps result in our final dataset and we can start our analysis.
+Throughout the last three years, the factories with the three highest absolute error rates are 1101, 1141, 1041, with 1141 and 1041 switching places. 
 
-## Analysis  
-In the following we look at the visualisation of our dataset to decide, where the next inspection should be carried out. Therefore we will especially focus on the most recent data and on the relative error figures because they are more meaningfull than the absolute error figures for evaluating the quality of a production process. The used graphs are from 2016 if not stated otherwise. These can be taken as exemplary for all years, because the data has very little deviation between the different years.
+**Relative error rates**  
+We now take a look at the relative error rates of the factories.
 
-**Option 1**  
-Overall the highest error rate of all factories occurs at factory 1111 with approximately 20% error rate. 
+```{r Relative error rates}
+# Pareto diagram to compare factories
+#Data for 2014
+y <- 2014
+errors_by_factory_2014 <- filter(errors_by_factory, production_year == y)
+errors_by_factory_2014$error_data <- errors_by_factory_2014$rel_error
+ymax <- 0.3
+ylabel <- "Relative Error"
+sec_axis_factor <- 6
+errors_by_factory_2014 <- errors_by_factory_2014[order(errors_by_factory_2014$error_data, decreasing = TRUE), ]
+errors_by_factory_2014$factory <- factor(errors_by_factory_2014$factory, levels = unique(errors_by_factory_2014$factory))
+errors_by_factory_2014$cum_error <- cumsum(errors_by_factory_2014$error_data)
+ggplot(errors_by_factory_2014, aes(x = errors_by_factory_2014$factory, y = errors_by_factory_2014$error_data)) +
+  geom_bar(aes(fill = errors_by_factory_2014$factory), stat = "identity") +
+  scale_y_continuous(limits = c(0, ymax), sec.axis = sec_axis(~ . / max(errors_by_factory_2014$cum_error / sec_axis_factor), name = "Cumulated")) +
+  geom_point(aes(y = errors_by_factory_2014$cum_error / sec_axis_factor), size = 2) +
+  geom_path(aes(y = errors_by_factory_2014$cum_error / sec_axis_factor, group = 1)) +
+  geom_hline(yintercept = max(errors_by_factory_2014$cum_error / sec_axis_factor), linetype = "dashed") +
+  labs(title = "Errors by factory for 2014", x = "Factories", y = ylabel) +
+  theme(legend.position = "none")
 
-![](Additional_files_Group_04/screenshots/factory_pareto_2016_rel.PNG "Factories Relative")
+#Data for 2015
+y <- 2015
+errors_by_factory_2015 <- filter(errors_by_factory, production_year == y)
+errors_by_factory_2015$error_data <- errors_by_factory_2015$rel_error
+ymax <- 0.3
+ylabel <- "Relative Error"
+sec_axis_factor <- 6
+errors_by_factory_2015 <- errors_by_factory_2015[order(errors_by_factory_2015$error_data, decreasing = TRUE), ]
+errors_by_factory_2015$factory <- factor(errors_by_factory_2015$factory, levels = unique(errors_by_factory_2015$factory))
+errors_by_factory_2015$cum_error <- cumsum(errors_by_factory_2015$error_data)
+ggplot(errors_by_factory_2015, aes(x = errors_by_factory_2015$factory, y = errors_by_factory_2015$error_data)) +
+  geom_bar(aes(fill = errors_by_factory_2015$factory), stat = "identity") +
+  scale_y_continuous(limits = c(0, ymax), sec.axis = sec_axis(~ . / max(errors_by_factory_2015$cum_error / sec_axis_factor), name = "Cumulated")) +
+  geom_point(aes(y = errors_by_factory_2015$cum_error / sec_axis_factor), size = 2) +
+  geom_path(aes(y = errors_by_factory_2015$cum_error / sec_axis_factor, group = 1)) +
+  geom_hline(yintercept = max(errors_by_factory_2015$cum_error / sec_axis_factor), linetype = "dashed") +
+  labs(title = "Errors by factory for 2015", x = "Factories", y = ylabel) +
+  theme(legend.position = "none")
+#Data for 2016
+y <- 2016
+errors_by_factory_2016 <- filter(errors_by_factory, production_year == y)
+errors_by_factory_2016$error_data <- errors_by_factory_2016$rel_error
+ymax <- 0.3
+ylabel <- "Relative Error"
+sec_axis_factor <- 6
+errors_by_factory_2016 <- errors_by_factory_2016[order(errors_by_factory_2016$error_data, decreasing = TRUE), ]
+errors_by_factory_2016$factory <- factor(errors_by_factory_2016$factory, levels = unique(errors_by_factory_2016$factory))
+errors_by_factory_2016$cum_error <- cumsum(errors_by_factory_2016$error_data)
+ggplot(errors_by_factory_2016, aes(x = errors_by_factory_2016$factory, y = errors_by_factory_2016$error_data)) +
+  geom_bar(aes(fill = errors_by_factory_2016$factory), stat = "identity") +
+  scale_y_continuous(limits = c(0, ymax), sec.axis = sec_axis(~ . / max(errors_by_factory_2016$cum_error / sec_axis_factor), name = "Cumulated")) +
+  geom_point(aes(y = errors_by_factory_2016$cum_error / sec_axis_factor), size = 2) +
+  geom_path(aes(y = errors_by_factory_2016$cum_error / sec_axis_factor, group = 1)) +
+  geom_hline(yintercept = max(errors_by_factory_2016$cum_error / sec_axis_factor), linetype = "dashed") +
+  labs(title = "Errors by factory for 2016", x = "Factories", y = ylabel) +
+  theme(legend.position = "none")
 
-This factory produces the components K2LE1 and K2LE2. The component K2LE1 was produced at the factory 1091 until the year 2012 with less than half the error rate.
+```
 
-![](Additional_files_Group_04/screenshots/comp_k2le1_rel_2012.PNG "K2LE1 Relative")
+The three factories with the highest relative error rates throughout the last three years were consistently 1111, 1011, 1041.  
 
-After the year 2012 the factory 1091 has been producing the component K2LE2 again with less than 10% error rate.
+We will take a closer look at factory 1041, since it is present in the top three of both categories.
 
-![](Additional_files_Group_04/screenshots/comp_k2le2_rel.PNG "K2LE2 Relative")
+**Components produced at factory 1041**
 
-This means that the production process of factory 1111 needs to be optimised, because the high error rate is not dependent on the product but on the factory.
+We need the components produced by factory 1041.
 
-**Option 2**  
-Factory 1041 has the third highest error rate with 15%.  It is very relevant for the overall production volume because it also has the third highest absolute error count. In year 2016 it produced 25000 faulty components which is significantly more than the 10000 of factory 1111.
+```{r factory 1041}
+unique(subset(errors_by_id, factory == 1041)$id)
+```
 
-![](Additional_files_Group_04/screenshots/factory_pareto_2016_abs.PNG "Factories Absolute")
+We will examine the absolute error rates for these components, each year presented separately. We start with the graphs displaying the weekly absolute error rates for the different components.
+**2014:**
+```{r absolute 2014 plots}
 
-The factory produces the components K1BE1, K1BE2 and K1D1. 
-The error rates for these components are similar in all producing factories. 
+selected_year <- 2014
 
-![](Additional_files_Group_04/screenshots/comp_k1be1_k1be2_rel.PNG "K1BE1 and K1BE2 Relative")
+selected_component <- "K1BE1"
+df <- data.frame(errors_by_id_week[[selected_component]]) %>%
+  filter(production_year == selected_year)
+df$factory <- factor(df$factory)
+ggplot(df, aes(x = df$production_week, group = df$factory)) +
+  geom_line(aes(y = df$abs_error, color = df$factory), size = 1) +
+  geom_point(aes(y = df$abs_error, color = df$factory), size = 2) +
+  geom_line(aes(y = df$total_error, color = "total"), size = 1.3, linetype = "dotted") +
+  labs(x = "Production Week", y = "Absolute Error", color = "Factory", title = selected_component)
 
-On the graphs of both components you can see that the absolute errors are fairly constant over the year and the factory 1041 is the most relevant factory in this regard.
+selected_component <- "K1BE2"
+df <- data.frame(errors_by_id_week[[selected_component]]) %>%
+  filter(production_year == selected_year)
+df$factory <- factor(df$factory)
+ggplot(df, aes(x = df$production_week, group = df$factory)) +
+  geom_line(aes(y = df$abs_error, color = df$factory), size = 1) +
+  geom_point(aes(y = df$abs_error, color = df$factory), size = 2) +
+  geom_line(aes(y = df$total_error, color = "total"), size = 1.3, linetype = "dotted") +
+  labs(x = "Production Week", y = "Absolute Error", color = "Factory", title = selected_component)
 
-![](Additional_files_Group_04/screenshots/comp_k1be1_year.PNG "K1BE1 Year")
+selected_component <- "K1DI1"
+df <- data.frame(errors_by_id_week[[selected_component]]) %>%
+  filter(production_year == selected_year)
+df$factory <- factor(df$factory)
+ggplot(df, aes(x = df$production_week, group = df$factory)) +
+  geom_line(aes(y = df$abs_error, color = df$factory), size = 1) +
+  geom_point(aes(y = df$abs_error, color = df$factory), size = 2) +
+  geom_line(aes(y = df$total_error, color = "total"), size = 1.3, linetype = "dotted") +
+  labs(x = "Production Week", y = "Absolute Error", color = "Factory", title = selected_component)
 
-![](Additional_files_Group_04/screenshots/comp_k1be2_year.PNG "K1BE2 Year")
+```
+**2015:**
+```{r absolute 2015 plots}
 
-However the relative error rates of K1BE1 and K1BE2 are very high in every factory compared to other components which indicates that an inspection of these product groups seems to be necessary regardless of the factories producing it.
+selected_year <- 2015
 
-**Option 3**  
-Another component which stands out is the component K3AG1 with an error rate of 20% at the factory 1051 and only about 10% percent at the two other factories 1061 and 1082. This indicates to inspect the production line for this component at the factory 1051.
+selected_component <- "K1BE1"
+df <- data.frame(errors_by_id_week[[selected_component]]) %>%
+  filter(production_year == selected_year)
+df$factory <- factor(df$factory)
+ggplot(df, aes(x = df$production_week, group = df$factory)) +
+  geom_line(aes(y = df$abs_error, color = df$factory), size = 1) +
+  geom_point(aes(y = df$abs_error, color = df$factory), size = 2) +
+  geom_line(aes(y = df$total_error, color = "total"), size = 1.3, linetype = "dotted") +
+  labs(x = "Production Week", y = "Absolute Error", color = "Factory", title = selected_component)
 
-![](Additional_files_Group_04/screenshots/comp_k3ag1_rel.PNG "K3AG1 Relative")
+selected_component <- "K1BE2"
+df <- data.frame(errors_by_id_week[[selected_component]]) %>%
+  filter(production_year == selected_year)
+df$factory <- factor(df$factory)
+ggplot(df, aes(x = df$production_week, group = df$factory)) +
+  geom_line(aes(y = df$abs_error, color = df$factory), size = 1) +
+  geom_point(aes(y = df$abs_error, color = df$factory), size = 2) +
+  geom_line(aes(y = df$total_error, color = "total"), size = 1.3, linetype = "dotted") +
+  labs(x = "Production Week", y = "Absolute Error", color = "Factory")
 
-**Conclusion**  
-In conclusion we found three different opportunities for optimisation. The biggest potential for lowering the overall error rates we see at the factory 1111, so we would decide to carry out the next inspection there and do a comprehensive process inspection.
+selected_component <- "K1DI1"
+df <- data.frame(errors_by_id_week[[selected_component]]) %>%
+  filter(production_year == selected_year)
+df$factory <- factor(df$factory)
+ggplot(df, aes(x = df$production_week, group = df$factory)) +
+  geom_line(aes(y = df$abs_error, color = df$factory), size = 1) +
+  geom_point(aes(y = df$abs_error, color = df$factory), size = 2) +
+  geom_line(aes(y = df$total_error, color = "total"), size = 1.3, linetype = "dotted") +
+  labs(x = "Production Week", y = "Absolute Error", color = "Factory", title = selected_component)
+```
 
+**2016:**
+```{r absolute 2016 plots}
 
+selected_year <- 2016
 
+selected_component <- "K1BE1"
+df <- data.frame(errors_by_id_week[[selected_component]]) %>%
+  filter(production_year == selected_year)
+df$factory <- factor(df$factory)
+ggplot(df, aes(x = df$production_week, group = df$factory)) +
+  geom_line(aes(y = df$abs_error, color = df$factory), size = 1) +
+  geom_point(aes(y = df$abs_error, color = df$factory), size = 2) +
+  geom_line(aes(y = df$total_error, color = "total"), size = 1.3, linetype = "dotted") +
+  labs(x = "Production Week", y = "Absolute Error", color = "Factory", title = selected_component)
 
+selected_component <- "K1BE2"
+df <- data.frame(errors_by_id_week[[selected_component]]) %>%
+  filter(production_year == selected_year)
+df$factory <- factor(df$factory)
+ggplot(df, aes(x = df$production_week, group = df$factory)) +
+  geom_line(aes(y = df$abs_error, color = df$factory), size = 1) +
+  geom_point(aes(y = df$abs_error, color = df$factory), size = 2) +
+  geom_line(aes(y = df$total_error, color = "total"), size = 1.3, linetype = "dotted") +
+  labs(x = "Production Week", y = "Absolute Error", color = "Factory", title = selected_component)
+
+selected_component <- "K1DI1"
+df <- data.frame(errors_by_id_week[[selected_component]]) %>%
+  filter(production_year == selected_year)
+df$factory <- factor(df$factory)
+ggplot(df, aes(x = df$production_week, group = df$factory)) +
+  geom_line(aes(y = df$abs_error, color = df$factory), size = 1) +
+  geom_point(aes(y = df$abs_error, color = df$factory), size = 2) +
+  geom_line(aes(y = df$total_error, color = "total"), size = 1.3, linetype = "dotted") +
+  labs(x = "Production Week", y = "Absolute Error", color = "Factory", title = selected_component)
+
+```
+
+Factory 1041 has consistently the greatest error rate for components K1BE1, K1BE2 and shares the first place with factory 1031 for K1DI1. 
+
+## Conclusion  
+
+The data examined points to factory 1041 as the prime canditate for the next inpection. Over the last three years it had an overall high relative and absolute error rate. The number of faulty K1BE1 and K1BE2 components produced at 1041 are around double or more than the other factories producing them, whereas K1DI1 components of 1041 are no better than those produced at other factories. Given the fact that factory 1041 had the third highest relative error rate which coresponds to over 25000 faulty parts produced, we conclude that the next inspection should take place at factory 1041.
