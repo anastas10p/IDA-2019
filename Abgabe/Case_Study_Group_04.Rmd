@@ -156,7 +156,7 @@ tidy_dataset <- function(component_data) {
 The data of every component file is stored in a seperate tibble.
 
 ```{r import, eval = FALSE}
-
+# Create a named list for the component tibbles.
 component_tibbles <- vector(mode = "list", length = 16)
 names(component_tibbles) <- c(
   "K1BE1", "K1BE2", "K1DI1", "K1DI2",
@@ -166,36 +166,36 @@ names(component_tibbles) <- c(
 ```
 Some files had formats that allowed a direct reading, while others needed some preparation. 
 ```{r reading the files, eval = FALSE}
-#read data using read.delim and the separators 
-#K1
+# We read the data using the proper delimiters and any necessary changes, since not all files could be read using only read.delim
+
 component_tibbles$K1BE1 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K1BE1.csv", sep = ""), head = TRUE, ","))
 component_tibbles$K1BE2 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K1BE2.csv",sep = ""), head = TRUE, ";"))
 component_tibbles$K1DI1 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K1DI1.csv",sep = ""), head = TRUE, ","))
 
-#K1di2 
+# K1DI2 needed to go through some changes.
+# We read it as a strin
 component_tibbles$K1DI2 <- readChar('Data/Komponente/Komponente_K1DI2.txt', file.info('Data/Komponente/Komponente_K1DI2.txt')$size)
+# We clear unnecessary whitespace and characters.
 component_tibbles$K1DI2 <- gsub('[[:blank:]]', '\\', component_tibbles$K1DI2)
 component_tibbles$K1DI2 <- gsub('""', '"\n"', component_tibbles$K1DI2)
 component_tibbles$K1DI2 <- tidy_dataset(read.delim(text = component_tibbles$K1DI2, header = TRUE , sep = '\\'))
 
-#K2
 component_tibbles$K2LE2 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K2LE2.txt",sep = ""), header = TRUE, "\\"))
 component_tibbles$K2ST1 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K2ST1.txt",sep = ""), header = TRUE, "|"))
 component_tibbles$K2ST2 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K2ST2.csv",sep = ""), header = TRUE, ";"))
 
-#K2le1
+# K2LE1 also needed changing.
+# We read it as a string. 
 component_tibbles$K2LE1 <- readChar('Data/Komponente/Komponente_K2LE1.txt', file.info('Data/Komponente/Komponente_K2LE1.txt')$size)
+# We substitue unnecessary characters and put newline characters where needed.
 component_tibbles$K2LE1 <- gsub('\x0B"', '\n"', component_tibbles$K2LE1)
 component_tibbles$K2LE1 <- gsub('II', ' ', component_tibbles$K2LE1)
 component_tibbles$K2LE1 <- tidy_dataset(read.delim(text = component_tibbles$K2LE1, header = TRUE , sep = ' '))
 
-#K3
 component_tibbles$K3AG1 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K3AG1.csv",sep = ""), header = TRUE, ","))
 component_tibbles$K3AG2 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K3AG2.txt", sep = ""), header = TRUE, "\\"))
 component_tibbles$K3SG1 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K3SG1.csv",sep = ""), header = TRUE, ","))
 component_tibbles$K3SG2 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K3SG2.csv",sep = ""), header = TRUE, ","))
-
-#K4 -k7
 component_tibbles$K4 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K4.csv", sep = ""), header = TRUE, ";"))
 component_tibbles$K5 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K5.csv", sep = ""), header = TRUE, ","))
 component_tibbles$K6 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K6.csv", sep = ""), header = TRUE, ";"))
