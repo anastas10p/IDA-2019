@@ -25,17 +25,21 @@ addResourcePath(prefix = "resources", directoryPath = "./Additional_files_Group_
 
 ############### UI ###############
 ui <- fluidPage(
-
+  
   # Application title
-  titlePanel(title = div("Error Statistics: Factories and Components", img(src = "resources/images.png", height = "20%", width = "20%", align = "right"))),
-
-
-
+  titlePanel(title = div("Error Statistics: Factories and Components",
+                         img(src = "resources/images.png",
+                             height = "20%",
+                             width = "20%",
+                             align = "right"))),
+  # Image downloaded from 
+  
   tabsetPanel(
     type = "tabs",
     tabPanel(
       "Info",
       img(src = "resources/car.jpeg", height = "40%", width = "40%", align = "center"),
+      # Image downloaded from 
       p(strong("Description")),
       p({
         "This application provides visualization tools for the available data on the components.
@@ -62,19 +66,19 @@ ui <- fluidPage(
         "The tab \"Dataset\" displays a browsable table of the dataset used to generate the plots."
       })
     ),
-
-
+    
+    
     tabPanel(
       "Pareto Plots",
       # Scrollable tab
-
+      
       fluidRow(
         column(
           width = 6,
           h4("Selection of the year"),
           # dropdown for production year
           selectInput("year", "Production Year:",
-            choices = errors_by_id$production_year, selected = TRUE
+                      choices = errors_by_id$production_year, selected = TRUE
           )
         ),
         column(
@@ -84,9 +88,9 @@ ui <- fluidPage(
           selectInput("error", "Relative/Absolute Error", choices = list("Relative", "Absolute"))
         )
       ),
-
+      
       plotOutput("Pareto1"),
-
+      
       # checkboxes to choose factories
       fluidRow(
         column(
@@ -102,21 +106,21 @@ ui <- fluidPage(
           actionButton("go", "Go")
         )
       ),
-
-
+      
+      
       plotOutput("Pareto2", height = "600px")
     ),
-
+    
     tabPanel(
       "Error on component-sharp resolution",
-
+      
       fluidRow(
         column(
           width = 6,
           h4("Selection of the year"),
           # dropdown for production year
           selectInput("year_line", "Production Year:",
-            choices = errors_by_id$production_year, selected = TRUE
+                      choices = errors_by_id$production_year, selected = TRUE
           )
         ),
         column(
@@ -126,11 +130,11 @@ ui <- fluidPage(
           selectInput("component", "Select component for detailed error plot", choices = names(errors_by_id_week))
         )
       ),
-
+      
       plotOutput("Linediagram")
     ),
-
-
+    
+    
     tabPanel("Dataset", dataTableOutput("dataset"))
   )
 )
@@ -138,30 +142,30 @@ ui <- fluidPage(
 
 ############ server ###############
 server <- function(input, output, session) {
-
+  
   # select input to filter by year for pareto diagram
   year_input <- reactive({
     input$year
   })
-
+  
   # Input for line diagram
   year_line_input <- reactive({
     input$year_line
   })
-
+  
   error_input <- reactive({
     switch(input$error,
-      "Relative" = "rel",
-      "Absolute" = "abs"
+           "Relative" = "rel",
+           "Absolute" = "abs"
     )
   })
-
-
+  
+  
   component_input <- reactive({
     input$component
   })
-
-
+  
+  
   # Pareto diagram to compare factories
   output$Pareto1 <- renderPlot({
     y <- year_input()
@@ -191,9 +195,9 @@ server <- function(input, output, session) {
       labs(title = "Errors by Factory", x = "Factories", y = ylabel) +
       theme(legend.position = "none")
   })
-
-
-
+  
+  
+  
   observe({
     updateCheckboxGroupInput(
       session, "factories",
@@ -201,21 +205,21 @@ server <- function(input, output, session) {
       selected = if (input$all) unique(errors_by_id$factory)
     )
   })
-
-
+  
+  
   # Delay creation of plots via go button
   factory_plots <- eventReactive(input$go, {
     (input$factories)
   })
-
+  
   # Pareto diagrams to compare components
   output$Pareto2 <- renderPlot({
     # define function for plotting the pareto diagram
     pareto <- function(df, f, e) {
-
+      
       # filter factory
       df <- filter(df, factory == f)
-
+      
       if (e == "rel") {
         df$error_data <- df$rel_error
         ymax <- 0.3
@@ -226,18 +230,18 @@ server <- function(input, output, session) {
         ymax <- 25000
         ylabel <- "Absolute Error"
       }
-
+      
       if (length(df$factory != 0)) {
         # descending order
         df <- df[order(df$error_data, decreasing = TRUE), ]
-
+        
         # make factors for x-axis
         df$id <- factor(df$id, levels = unique(df$id))
-
-
+        
+        
         # new column cumulative relative error
         df$cum_error <- cumsum(df$error_data)
-
+        
         # generate the Pareto chart
         ggplot(df, aes(x = df$id, y = df$error_data)) +
           geom_bar(aes(fill = df$id), stat = "identity", width = length(df$id) * 0.2) +
@@ -255,7 +259,7 @@ server <- function(input, output, session) {
           ))
       }
     }
-
+    
     y <- year_input()
     errors_by_id <- filter(errors_by_id, production_year == y)
     e <- error_input()
@@ -273,9 +277,9 @@ server <- function(input, output, session) {
       do.call(plot_grid, c(plots, nrow = 3))
     }
   })
-
-
-
+  
+  
+  
   output$Linediagram <- renderPlot({
     validate(
       need(input$component, "Please select a component")
@@ -291,8 +295,8 @@ server <- function(input, output, session) {
       geom_line(aes(y = df$total_error, color = "total"), size = 1.3, linetype = "dotted") +
       labs(x = "Production Week", y = "Absolute Error", color = "Factory")
   })
-
-
+  
+  
   # Show the basic dataset
   output$dataset <- renderDataTable(rename(errors_by_id, component = id), options = list(pageLength = 10))
 }
