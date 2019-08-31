@@ -20,7 +20,7 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
 
 We will use the `tidyverse` package to clean up our data, and the `shiny` package to visualize the data.
 ```{r  results='hide', message=FALSE}
-if( !require(tidyverse)){
+if (!require(tidyverse)) {
   install.packages("tidyverse")
 }
 library(tidyverse)
@@ -36,7 +36,7 @@ The necessary files are imported using the read.delim function. The data from ea
 
 ```{r tidy_dataset}
 tidy_dataset <- function(component_data) {
-  
+
   # Drop the columns that do not interest us.
   component_data <- select(component_data, -c(
     starts_with("Hersteller"),
@@ -48,12 +48,12 @@ tidy_dataset <- function(component_data) {
   for (id_column in colnames(select(component_data, starts_with("ID")))) {
     component_data[[id_column]] <- as.character(component_data[[id_column]])
   }
-  
+
   # Get the Fehlerhaft columns.
   # These describe:
   # 1)whether or not a component was faulty
   # 2)if yes, when the component broke down and
-  # 3)the distance covered until that point. 
+  # 3)the distance covered until that point.
   for (faulty_column in colnames(select(component_data, starts_with("Fehlerhaft")))) {
     if (startsWith(faulty_column, "Fehlerhaft_Datum")) {
       component_data[[faulty_column]] <- as.Date(component_data[[faulty_column]], format = "%Y-%m-%d")
@@ -63,16 +63,16 @@ tidy_dataset <- function(component_data) {
       component_data[[faulty_column]] <- as.logical(component_data[[faulty_column]])
     }
   }
-  
+
   # Get the Produktionsatum columns
   # If the date is set as an origin date:
   if ("origin" %in% colnames(component_data)) {
     for (production_date_column in colnames(select(component_data, starts_with("Produktionsdatum")))) {
       component_data[[paste("Produktionsdatum",
-                            ifelse(is.na(strsplit(production_date_column, ".", fixed = TRUE)[[1]][2]),
-                                   "", paste(".", strsplit(production_date_column, sep = ".", fixed = TRUE)[[1]][2])
-                            ),
-                            sep = ""
+        ifelse(is.na(strsplit(production_date_column, ".", fixed = TRUE)[[1]][2]),
+          "", paste(".", strsplit(production_date_column, sep = ".", fixed = TRUE)[[1]][2])
+        ),
+        sep = ""
       )]] <-
         as.Date(component_data[[production_date_column]], origin = "1970-01-01")
     }
@@ -82,11 +82,11 @@ tidy_dataset <- function(component_data) {
       component_data[[production_date_column]] <- as.Date(component_data[[production_date_column]], format = "%Y-%m-%d")
     }
   }
-  
+
   # Create new clean columns from the data gathered
-  
+
   # These commands are kept separate for readability's sake.
-  
+
   # ID columns:
   id_cols <- Filter(
     Negate(function(x) is.null(unlist(x))),
@@ -97,7 +97,7 @@ tidy_dataset <- function(component_data) {
     )
   )
   component_data$id <- as.factor(coalesce(!!!id_cols))
-  
+
   # Production date columns:
   production_date_cols <- Filter(
     Negate(function(x) is.null(unlist(x))),
@@ -108,8 +108,8 @@ tidy_dataset <- function(component_data) {
     )
   )
   component_data$production_date <- coalesce(!!!production_date_cols)
-  
-  #Faulty date columns:
+
+  # Faulty date columns:
   faulty_date_cols <- Filter(
     Negate(function(x) is.null(unlist(x))),
     list(
@@ -119,7 +119,7 @@ tidy_dataset <- function(component_data) {
     )
   )
   component_data$faulty_date <- coalesce(!!!faulty_date_cols)
-  
+
   # faulty columns
   faulty_cols <- Filter(
     Negate(function(x) is.null(unlist(x))),
@@ -130,11 +130,11 @@ tidy_dataset <- function(component_data) {
     )
   )
   component_data$faulty <- coalesce(!!!faulty_cols)
-  
+
   # Production year and production week columns
   component_data$production_year <- as.factor(lubridate::year(component_data$production_date))
   component_data$production_week <- lubridate::week(component_data$production_date)
-  
+
   # Fill the producer and factory column using the data from the id.
   component_data_clean <- component_data %>%
     separate(id, c("id", "producer", "factory", "count"), "-") %>%
@@ -142,10 +142,10 @@ tidy_dataset <- function(component_data) {
       "id", "producer", "factory", "faulty",
       "production_year", "production_week", "faulty_date"
     ))
-  
+
   # Remove the old dataset, since we no longer need it.
   rm(component_data)
-  
+
   component_data_clean$id <- as.factor(component_data_clean$id)
   component_data_clean$producer <- as.numeric(component_data_clean$producer)
   component_data_clean$factory <- as.numeric(component_data_clean$factory)
@@ -162,69 +162,69 @@ names(component_tibbles) <- c(
   "K1BE1", "K1BE2", "K1DI1", "K1DI2",
   "K2LE1", "K2LE2", "K2ST1", "K2ST2",
   "K3AG1", "K3AG2", "K3SG1", "K3SG2",
-  "K4", "K5", "K6", "K7")
+  "K4", "K5", "K6", "K7"
+)
 ```
 Some files had formats that allowed a direct reading, while others needed some preparation. 
 ```{r reading the files, eval = FALSE}
 # We read the data using the proper delimiters and any necessary changes, since not all files could be read using only read.delim
 
-component_tibbles$K1BE1 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K1BE1.csv", sep = ""), head = TRUE, ","))
-component_tibbles$K1BE2 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K1BE2.csv",sep = ""), head = TRUE, ";"))
-component_tibbles$K1DI1 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K1DI1.csv",sep = ""), head = TRUE, ","))
+component_tibbles$K1BE1 <- tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K1BE1.csv", sep = ""), head = TRUE, ","))
+component_tibbles$K1BE2 <- tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K1BE2.csv", sep = ""), head = TRUE, ";"))
+component_tibbles$K1DI1 <- tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K1DI1.csv", sep = ""), head = TRUE, ","))
 
 # K1DI2 needed to go through some changes.
 # We read it as a strin
-component_tibbles$K1DI2 <- readChar('Data/Komponente/Komponente_K1DI2.txt', file.info('Data/Komponente/Komponente_K1DI2.txt')$size)
+component_tibbles$K1DI2 <- readChar("Data/Komponente/Komponente_K1DI2.txt", file.info("Data/Komponente/Komponente_K1DI2.txt")$size)
 # We clear unnecessary whitespace and characters.
-component_tibbles$K1DI2 <- gsub('[[:blank:]]', '\\', component_tibbles$K1DI2)
+component_tibbles$K1DI2 <- gsub("[[:blank:]]", "\", component_tibbles$K1DI2)
 component_tibbles$K1DI2 <- gsub('""', '"\n"', component_tibbles$K1DI2)
-component_tibbles$K1DI2 <- tidy_dataset(read.delim(text = component_tibbles$K1DI2, header = TRUE , sep = '\\'))
+component_tibbles$K1DI2 <- tidy_dataset(read.delim(text = component_tibbles$K1DI2, header = TRUE, sep = "\"))
 
-component_tibbles$K2LE2 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K2LE2.txt",sep = ""), header = TRUE, "\\"))
-component_tibbles$K2ST1 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K2ST1.txt",sep = ""), header = TRUE, "|"))
-component_tibbles$K2ST2 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K2ST2.csv",sep = ""), header = TRUE, ";"))
+component_tibbles$K2LE2 <- tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K2LE2.txt", sep = ""), header = TRUE, "\\"))
+component_tibbles$K2ST1 <- tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K2ST1.txt", sep = ""), header = TRUE, "|"))
+component_tibbles$K2ST2 <- tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K2ST2.csv", sep = ""), header = TRUE, ";"))
 
 # K2LE1 also needed changing.
-# We read it as a string. 
-component_tibbles$K2LE1 <- readChar('Data/Komponente/Komponente_K2LE1.txt', file.info('Data/Komponente/Komponente_K2LE1.txt')$size)
+# We read it as a string.
+component_tibbles$K2LE1 <- readChar("Data/Komponente/Komponente_K2LE1.txt", file.info("Data/Komponente/Komponente_K2LE1.txt")$size)
 # We substitue unnecessary characters and put newline characters where needed.
 component_tibbles$K2LE1 <- gsub('\x0B"', '\n"', component_tibbles$K2LE1)
-component_tibbles$K2LE1 <- gsub('II', ' ', component_tibbles$K2LE1)
-component_tibbles$K2LE1 <- tidy_dataset(read.delim(text = component_tibbles$K2LE1, header = TRUE , sep = ' '))
+component_tibbles$K2LE1 <- gsub("II", " ", component_tibbles$K2LE1)
+component_tibbles$K2LE1 <- tidy_dataset(read.delim(text = component_tibbles$K2LE1, header = TRUE, sep = " "))
 
-component_tibbles$K3AG1 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K3AG1.csv",sep = ""), header = TRUE, ","))
-component_tibbles$K3AG2 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K3AG2.txt", sep = ""), header = TRUE, "\\"))
-component_tibbles$K3SG1 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K3SG1.csv",sep = ""), header = TRUE, ","))
-component_tibbles$K3SG2 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K3SG2.csv",sep = ""), header = TRUE, ","))
-component_tibbles$K4 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K4.csv", sep = ""), header = TRUE, ";"))
-component_tibbles$K5 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K5.csv", sep = ""), header = TRUE, ","))
-component_tibbles$K6 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K6.csv", sep = ""), header = TRUE, ";"))
-component_tibbles$K7 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K7.txt", sep = ""), header = TRUE, "\t"))
-
+component_tibbles$K3AG1 <- tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K3AG1.csv", sep = ""), header = TRUE, ","))
+component_tibbles$K3AG2 <- tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K3AG2.txt", sep = ""), header = TRUE, "\\"))
+component_tibbles$K3SG1 <- tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K3SG1.csv", sep = ""), header = TRUE, ","))
+component_tibbles$K3SG2 <- tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K3SG2.csv", sep = ""), header = TRUE, ","))
+component_tibbles$K4 <- tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K4.csv", sep = ""), header = TRUE, ";"))
+component_tibbles$K5 <- tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K5.csv", sep = ""), header = TRUE, ","))
+component_tibbles$K6 <- tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K6.csv", sep = ""), header = TRUE, ";"))
+component_tibbles$K7 <- tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K7.txt", sep = ""), header = TRUE, "\t"))
 
 ```
 Having read the data we produce three different dataframes for our analysis.
 
 ```{r prepare, eval = FALSE}
 
-#dataframes for app
+# dataframes for app
 errors_by_id <- component_tibbles
-for (component in 1:length(errors_by_id)){
+for (component in 1:length(errors_by_id)) {
   errors_by_id[[component]] <- errors_by_id[[component]] %>%
     group_by(id, producer, factory, production_year) %>%
-    summarise(abs_error = sum(faulty, na.rm = TRUE), rel_error = abs_error/length(id))
+    summarise(abs_error = sum(faulty, na.rm = TRUE), rel_error = abs_error / length(id))
 }
 errors_by_id <- bind_rows(errors_by_id)
 
 errors_by_factory <- bind_rows(component_tibbles) %>%
   group_by(factory, production_year) %>%
-  summarise(abs_error = sum(faulty, na.rm = TRUE), rel_error = abs_error/length(id))
+  summarise(abs_error = sum(faulty, na.rm = TRUE), rel_error = abs_error / length(id))
 
 errors_by_id_week <- component_tibbles
-for (component in 1:length(errors_by_id_week)){
+for (component in 1:length(errors_by_id_week)) {
   errors_by_id_week[[component]] <- errors_by_id_week[[component]] %>%
     group_by(factory, production_year, production_week) %>%
-    summarise(abs_error = sum(faulty, na.rm = TRUE), rel_error = abs_error/length(id)) %>%
+    summarise(abs_error = sum(faulty, na.rm = TRUE), rel_error = abs_error / length(id)) %>%
     group_by(production_year, production_week) %>%
     mutate(total_error = sum(abs_error))
 }
@@ -249,7 +249,7 @@ We produce the Pareto plots displaying the absolute error rates for the years we
 ```{r Absolute error rates, echo=FALSE}
 
 # Pareto diagram to compare factories
-#Data for 2014
+# Data for 2014
 y <- 2014
 errors_by_factory_2014 <- filter(errors_by_factory, production_year == y)
 errors_by_factory_2014$error_data <- errors_by_factory_2014$abs_error
@@ -268,7 +268,7 @@ ggplot(errors_by_factory_2014, aes(x = errors_by_factory_2014$factory, y = error
   labs(title = "Errors by factory for 2014", x = "Factories", y = ylabel) +
   theme(legend.position = "none")
 
-#Data for 2015
+# Data for 2015
 y <- 2015
 errors_by_factory_2015 <- filter(errors_by_factory, production_year == y)
 errors_by_factory_2015$error_data <- errors_by_factory_2015$abs_error
@@ -286,7 +286,7 @@ ggplot(errors_by_factory_2015, aes(x = errors_by_factory_2015$factory, y = error
   geom_hline(yintercept = max(errors_by_factory_2015$cum_error / sec_axis_factor), linetype = "dashed") +
   labs(title = "Errors by factory for 2015", x = "Factories", y = ylabel) +
   theme(legend.position = "none")
-#Data for 2016
+# Data for 2016
 y <- 2016
 errors_by_factory_2016 <- filter(errors_by_factory, production_year == y)
 errors_by_factory_2016$error_data <- errors_by_factory_2016$abs_error
@@ -314,7 +314,7 @@ We now take a look at the relative error rates of the factories.
 
 ```{r Relative error rates}
 # Pareto diagram to compare factories
-#Data for 2014
+# Data for 2014
 y <- 2014
 errors_by_factory_2014 <- filter(errors_by_factory, production_year == y)
 errors_by_factory_2014$error_data <- errors_by_factory_2014$rel_error
@@ -333,7 +333,7 @@ ggplot(errors_by_factory_2014, aes(x = errors_by_factory_2014$factory, y = error
   labs(title = "Errors by factory for 2014", x = "Factories", y = ylabel) +
   theme(legend.position = "none")
 
-#Data for 2015
+# Data for 2015
 y <- 2015
 errors_by_factory_2015 <- filter(errors_by_factory, production_year == y)
 errors_by_factory_2015$error_data <- errors_by_factory_2015$rel_error
@@ -351,7 +351,7 @@ ggplot(errors_by_factory_2015, aes(x = errors_by_factory_2015$factory, y = error
   geom_hline(yintercept = max(errors_by_factory_2015$cum_error / sec_axis_factor), linetype = "dashed") +
   labs(title = "Errors by factory for 2015", x = "Factories", y = ylabel) +
   theme(legend.position = "none")
-#Data for 2016
+# Data for 2016
 y <- 2016
 errors_by_factory_2016 <- filter(errors_by_factory, production_year == y)
 errors_by_factory_2016$error_data <- errors_by_factory_2016$rel_error
@@ -498,7 +498,7 @@ Factory 1041 has consistently the greatest error rate for components K1BE1, K1BE
 
 ## Conclusion  
 
-The data examined points to factory 1041 as the prime canditate for the next inpection. Over the last three years it had an overall high relative and absolute error rate. The number of faulty K1BE1 and K1BE2 components produced at 1041 are around double or more than the other factories producing them, whereas K1DI1 components of 1041 are no better than those produced at other factories. Given the fact that factory 1041 had the third highest relative error rate which coresponds to over 25000 faulty parts produced, we conclude that the next inspection should take place at factory 1041. The product group examined should be components K1BE1 and K1BE2 given their high failure rate.
+The data examined points to factory 1041 as the prime canditate for the next inpection. Over the last three years it had an overall high relative and absolute error rate. The number of faulty K1BE1 and K1BE2 components produced at 1041 are around double or more than the other factories producing them, whereas K1DI1 components of 1041 are no better than those produced at other factories. Given the fact that factory 1041 had the third highest relative error rate which coresponds to over 25000 faulty parts produced, we conclude that the next inspection should take place at factory 1041. The product group examined should be components K1BE1 and K1BE2 given their high failure numbers, as shown in the final part of our analysis.
 
 ## Appendix: The Shiny application
 We give the source code used in our Shiny application. Parts of this code have been modified and used in our analysis.
@@ -531,22 +531,26 @@ addResourcePath(prefix = "resources", directoryPath = "./Additional_files_Group_
 
 ############### UI ###############
 ui <- fluidPage(
-  
+
   # Application title
-  titlePanel(title = div("Error Statistics: Factories and Components",
-                         img(src = "resources/images.png",
-                             # Image downloaded from 
-                             height = "20%",
-                             width = "20%",
-                             align = "right"))),
-  # Image downloaded from 
-  
+  titlePanel(title = div(
+    "Error Statistics: Factories and Components",
+    img(
+      src = "resources/images.png",
+      # Image downloaded from
+      height = "20%",
+      width = "20%",
+      align = "right"
+    )
+  )),
+  # Image downloaded from
+
   tabsetPanel(
     type = "tabs",
     tabPanel(
       "Info",
       img(src = "resources/car.jpeg", height = "40%", width = "40%", align = "center"),
-      # Image downloaded from 
+      # Image downloaded from
       p(strong("Description")),
       p({
         "This application provides visualization tools for the available data on the components.
@@ -573,19 +577,19 @@ ui <- fluidPage(
         "The tab \"Dataset\" displays a browsable table of the dataset used to generate the plots."
       })
     ),
-    
-    
+
+
     tabPanel(
       "Pareto Plots",
       # Scrollable tab
-      
+
       fluidRow(
         column(
           width = 6,
           h4("Selection of the year"),
           # dropdown for production year
           selectInput("year", "Production Year:",
-                      choices = errors_by_id$production_year, selected = TRUE
+            choices = errors_by_id$production_year, selected = TRUE
           )
         ),
         column(
@@ -595,9 +599,9 @@ ui <- fluidPage(
           selectInput("error", "Relative/Absolute Error", choices = list("Relative", "Absolute"))
         )
       ),
-      
+
       plotOutput("Pareto1"),
-      
+
       # checkboxes to choose factories
       fluidRow(
         column(
@@ -613,21 +617,21 @@ ui <- fluidPage(
           actionButton("go", "Go")
         )
       ),
-      
-      
+
+
       plotOutput("Pareto2", height = "600px")
     ),
-    
+
     tabPanel(
       "Error on component-sharp resolution",
-      
+
       fluidRow(
         column(
           width = 6,
           h4("Selection of the year"),
           # dropdown for production year
           selectInput("year_line", "Production Year:",
-                      choices = errors_by_id$production_year, selected = TRUE
+            choices = errors_by_id$production_year, selected = TRUE
           )
         ),
         column(
@@ -637,11 +641,11 @@ ui <- fluidPage(
           selectInput("component", "Select component for detailed error plot", choices = names(errors_by_id_week))
         )
       ),
-      
+
       plotOutput("Linediagram")
     ),
-    
-    
+
+
     tabPanel("Dataset", dataTableOutput("dataset"))
   )
 )
@@ -649,30 +653,30 @@ ui <- fluidPage(
 
 ############ server ###############
 server <- function(input, output, session) {
-  
+
   # select input to filter by year for pareto diagram
   year_input <- reactive({
     input$year
   })
-  
+
   # Input for line diagram
   year_line_input <- reactive({
     input$year_line
   })
-  
+
   error_input <- reactive({
     switch(input$error,
-           "Relative" = "rel",
-           "Absolute" = "abs"
+      "Relative" = "rel",
+      "Absolute" = "abs"
     )
   })
-  
-  
+
+
   component_input <- reactive({
     input$component
   })
-  
-  
+
+
   # Pareto diagram to compare factories
   output$Pareto1 <- renderPlot({
     y <- year_input()
@@ -702,9 +706,9 @@ server <- function(input, output, session) {
       labs(title = "Errors by Factory", x = "Factories", y = ylabel) +
       theme(legend.position = "none")
   })
-  
-  
-  
+
+
+
   observe({
     updateCheckboxGroupInput(
       session, "factories",
@@ -712,21 +716,21 @@ server <- function(input, output, session) {
       selected = if (input$all) unique(errors_by_id$factory)
     )
   })
-  
-  
+
+
   # Delay creation of plots via go button
   factory_plots <- eventReactive(input$go, {
     (input$factories)
   })
-  
+
   # Pareto diagrams to compare components
   output$Pareto2 <- renderPlot({
     # define function for plotting the pareto diagram
     pareto <- function(df, f, e) {
-      
+
       # filter factory
       df <- filter(df, factory == f)
-      
+
       if (e == "rel") {
         df$error_data <- df$rel_error
         ymax <- 0.3
@@ -737,18 +741,18 @@ server <- function(input, output, session) {
         ymax <- 25000
         ylabel <- "Absolute Error"
       }
-      
+
       if (length(df$factory != 0)) {
         # descending order
         df <- df[order(df$error_data, decreasing = TRUE), ]
-        
+
         # make factors for x-axis
         df$id <- factor(df$id, levels = unique(df$id))
-        
-        
+
+
         # new column cumulative relative error
         df$cum_error <- cumsum(df$error_data)
-        
+
         # generate the Pareto chart
         ggplot(df, aes(x = df$id, y = df$error_data)) +
           geom_bar(aes(fill = df$id), stat = "identity", width = length(df$id) * 0.2) +
@@ -766,7 +770,7 @@ server <- function(input, output, session) {
           ))
       }
     }
-    
+
     y <- year_input()
     errors_by_id <- filter(errors_by_id, production_year == y)
     e <- error_input()
@@ -784,9 +788,9 @@ server <- function(input, output, session) {
       do.call(plot_grid, c(plots, nrow = 3))
     }
   })
-  
-  
-  
+
+
+
   output$Linediagram <- renderPlot({
     validate(
       need(input$component, "Please select a component")
@@ -802,8 +806,8 @@ server <- function(input, output, session) {
       geom_line(aes(y = df$total_error, color = "total"), size = 1.3, linetype = "dotted") +
       labs(x = "Production Week", y = "Absolute Error", color = "Factory")
   })
-  
-  
+
+
   # Show the basic dataset
   output$dataset <- renderDataTable(rename(errors_by_id, component = id), options = list(pageLength = 10))
 }
