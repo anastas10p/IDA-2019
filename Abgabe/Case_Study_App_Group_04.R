@@ -29,6 +29,7 @@ ui <- fluidPage(
   # Application title
   titlePanel(title = div("Error Statistics: Factories and Components",
                          img(src = "resources/images.png",
+                             # Image downloaded from 
                              height = "20%",
                              width = "20%",
                              align = "right"))),
