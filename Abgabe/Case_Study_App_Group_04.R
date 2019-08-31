@@ -20,7 +20,7 @@ if (!require(dplyr)) {
 library(dplyr)
 
 
-load(paste(getwd(), "/Additional_files_Group_04/dataset_app.RData", sep = ""))
+load(paste(getwd(), "/Final_Data_Group_04.RData", sep = ""))
 addResourcePath(prefix = "resources", directoryPath = "./Additional_files_Group_04")
 
 ############### UI ###############

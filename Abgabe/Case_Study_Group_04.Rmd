@@ -232,7 +232,7 @@ for (component in 1:length(errors_by_id_week)){
 These steps result in our final dataset and we can start our analysis. We save the generated data in an .RData file.
 
 ``` {r save data, eval = FALSE}
-save(errors_by_factory, errors_by_id, errors_by_id_week, file = "dataset_app.RData")
+save(errors_by_factory, errors_by_id, errors_by_id_week, file = "Final_Data_Group_04.RData")
 ```
 
 
@@ -240,7 +240,7 @@ save(errors_by_factory, errors_by_id, errors_by_id_week, file = "dataset_app.RDa
 In the following we look at the visualisation of our dataset to decide, where the next inspection should be carried out. We will be examining the last three years of production for which we have data, i.e. 2014, 2015 and 2016. We will look at the absolute and relative error rates of the factories, and then. For our visualization we use slight modifications of our Shiny application, therefore we import the shiny library and load the relevant data.
 
 ```{r data, echo = TRUE}
-load("Additional_files_Group_04/dataset_app.RData")
+load("Final_Data_Group_04.RData")
 ```
 
 **Absolute error rate**  
@@ -526,7 +526,7 @@ if (!require(dplyr)) {
 library(dplyr)
 
 
-load(paste(getwd(), "/Additional_files_Group_04/dataset_app.RData", sep = ""))
+load(paste(getwd(), "Final_Data_Group_04.RData", sep = ""))
 addResourcePath(prefix = "resources", directoryPath = "./Additional_files_Group_04")
 
 ############### UI ###############
