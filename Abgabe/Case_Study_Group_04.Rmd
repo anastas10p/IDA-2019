@@ -13,13 +13,12 @@ Philipp Herpich, Marina Matthaiou, Daniel Schewitz, Tatjana Stefanie Spanehl, An
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
-
 ```
 
 ## Packages
 
 
-We will use the `tidyverse` package to clean up our data, and the 'shiny' package to visualize the data.
+We will use the `tidyverse` package to clean up our data, and the `shiny` package to visualize the data.
 ```{r  results='hide', message=FALSE}
 if( !require(tidyverse)){
   install.packages("tidyverse")
@@ -167,7 +166,7 @@ Some files had formats that allowed a direct reading, while others needed some p
 ```{r reading the files, eval = FALSE}
 #read data using read.delim and the separators 
 #K1
-component_tibbles$K1BE1 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K1BE1.csv",sep = ""), head = TRUE, ","))
+component_tibbles$K1BE1 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K1BE1.csv", sep = ""), head = TRUE, ","))
 component_tibbles$K1BE2 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K1BE2.csv",sep = ""), head = TRUE, ";"))
 component_tibbles$K1DI1 <-  tidy_dataset(read.delim(paste("Data/Komponente/Komponente_K1DI1.csv",sep = ""), head = TRUE, ","))
 
@@ -497,7 +496,7 @@ Factory 1041 has consistently the greatest error rate for components K1BE1, K1BE
 
 ## Conclusion  
 
-The data examined points to factory 1041 as the prime canditate for the next inpection. Over the last three years it had an overall high relative and absolute error rate. The number of faulty K1BE1 and K1BE2 components produced at 1041 are around double or more than the other factories producing them, whereas K1DI1 components of 1041 are no better than those produced at other factories. Given the fact that factory 1041 had the third highest relative error rate which coresponds to over 25000 faulty parts produced, we conclude that the next inspection should take place at factory 1041.
+The data examined points to factory 1041 as the prime canditate for the next inpection. Over the last three years it had an overall high relative and absolute error rate. The number of faulty K1BE1 and K1BE2 components produced at 1041 are around double or more than the other factories producing them, whereas K1DI1 components of 1041 are no better than those produced at other factories. Given the fact that factory 1041 had the third highest relative error rate which coresponds to over 25000 faulty parts produced, we conclude that the next inspection should take place at factory 1041. The product group examined should be components K1BE1 and K1BE2 given their high failure rate.
 
 ## Appendix: The Shiny application
 We give the source code used in our Shiny application. Parts of this code have been modified and used in our analysis.
