@@ -25,27 +25,27 @@ Include the `shiny`, `tidyverse` and `readr` packages
 ```{r  results='hide', message=FALSE}
 
 
-if( !require(tidyverse)){
+if (!require(tidyverse)) {
   install.packages("tidyverse")
 }
 library(tidyverse)
 
-if( !require(readr)){
+if (!require(readr)) {
   install.packages("readr")
 }
 library(readr)
 
-if(!require(base)){
+if (!require(base)) {
   install.packages("base")
 }
 library(base)
 
-if(!require(ggplot2)){
+if (!require(ggplot2)) {
   install.packages("ggplot2")
 }
 library(ggplot2)
 
-if(!require(stringr)){
+if (!require(stringr)) {
   install.packages("stringr")
 }
 library(stringr)
@@ -72,7 +72,7 @@ The data records are linked with full_join (). In addition, mutate () creates a 
 Logistics_delay <- full_join(component_K7, Verzug_K7, by = "IDNummer")
 
 Logistics_delay <- Logistics_delay %>%
-  mutate(delay = Wareneingang-Produktionsdatum)
+  mutate(delay = Wareneingang - Produktionsdatum)
 Logistics_delay$delay <- as.numeric(Logistics_delay$delay)
 head(Logistics_delay)
 
@@ -109,7 +109,7 @@ mean_delay
 
 For the visualization of the distribution we chose a histogram.
 ```{r visualization}
-ggplot(Logistics_delay,aes(delay)) +
+ggplot(Logistics_delay, aes(delay)) +
   geom_bar(fill = "navy")
 
 ```
@@ -126,17 +126,17 @@ The concept is called the relational model.
 In order to find out how many vehicles were registered in Dortmund, we need to read our data first. We do that with  function read.delim().
 
 ```{r registration}
-registration_all_vehicles <-  read.delim(paste("Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv", sep = ""), ";", header  = TRUE) %>% subset(select = -1)
+registration_all_vehicles <- read.delim(paste("Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv", sep = ""), ";", header = TRUE) %>% subset(select = -1)
 head(registration_all_vehicles)
 
 ```
 
 We now read  Bestandteile aller Fahrzeuge. We  need only ID_Fahrzeug und ID_Karosserie , because the rest of the columns are not useful.
 ```{r read components}
-component_part_Typ11 <- read.delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ11.csv", sep = ""), ";", header = TRUE) %>% subset(select=c(ID_Fahrzeug, ID_Karosserie))
-component_part_Typ12 <- read.delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ12.csv", sep = ""), ";", header = TRUE) %>% subset(select=c(ID_Fahrzeug, ID_Karosserie))
-component_part_Typ21 <- read.delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ21.csv", sep = ""), ";", header = TRUE) %>% subset(select=c(ID_Fahrzeug, ID_Karosserie))
-component_part_Typ22 <- read.delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ22.csv", sep = ""), ";", header = TRUE) %>% subset(select=c(ID_Fahrzeug, ID_Karosserie))
+component_part_Typ11 <- read.delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ11.csv", sep = ""), ";", header = TRUE) %>% subset(select = c(ID_Fahrzeug, ID_Karosserie))
+component_part_Typ12 <- read.delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ12.csv", sep = ""), ";", header = TRUE) %>% subset(select = c(ID_Fahrzeug, ID_Karosserie))
+component_part_Typ21 <- read.delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ21.csv", sep = ""), ";", header = TRUE) %>% subset(select = c(ID_Fahrzeug, ID_Karosserie))
+component_part_Typ22 <- read.delim(paste("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ22.csv", sep = ""), ";", header = TRUE) %>% subset(select = c(ID_Fahrzeug, ID_Karosserie))
 ```
 
 
@@ -222,7 +222,6 @@ registrations_all_vehicles <- read.delim(paste("Data/Zulassungen/Zulassungen_all
 colnames(registrations_all_vehicles)[1] <- "ID_Fahrzeug"
 
 wanted_vehicle <- inner_join(registrations_all_vehicles, vehicle_wanted_engine, by = "ID_Fahrzeug")
-
 ```
 
 The vehicle with the engine code "K1BE2-104-1041-32049" was registered at 26 November 2009 in Leipzig. 
