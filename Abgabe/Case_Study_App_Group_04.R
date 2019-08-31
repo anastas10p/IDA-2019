@@ -29,18 +29,16 @@ ui <- fluidPage(
   # Application title
   titlePanel(title = div("Error Statistics: Factories and Components",
                          img(src = "resources/images.png",
-                             # Image downloaded from 
                              height = "20%",
                              width = "20%",
                              align = "right"))),
-  # Image downloaded from 
   
   tabsetPanel(
     type = "tabs",
     tabPanel(
       "Info",
       img(src = "resources/car.jpeg", height = "40%", width = "40%", align = "center"),
-      # Image downloaded from 
+      # Image source: https://www.kiplinger.com/kipimages/pages/14465.jpg
       p(strong("Description")),
       p({
         "This application provides visualization tools for the available data on the components.
