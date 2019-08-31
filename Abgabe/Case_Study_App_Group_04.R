@@ -38,28 +38,28 @@ ui <- fluidPage(
       img(src = "resources/car.jpeg", height = "40%", width = "40%", align = "center"),
       p(strong("Description")),
       p({
-        "The present app is designed to cope with large amount of data in the automotive sector.
-                           It helps identifying suppliers of certain components which have high error rates (absolute and relative)."
+        "This application provides visualization tools for the available data on the components.
+         It allows the examination of data grouped by year, factory or component through different kinds of plots."
       }),
       br(),
       p(strong("Pareto Plots")),
       p({
-        "In the tab \"Pareto Plots\", you can generate Pareto digrams which sort the factory and components, respectively in a descending order.
-                           The upper Pareto diagram displays the error rates of the factory as a whole, meaning that
-                           there is no distinction between the manufactured components within the factory. Beneath the 
-                           Pareto diagram, you have the possibility to manually select individual factories in order to 
+        "In the tab \"Pareto Plots\", Pareto diagrams with the yearly factory and component data are generated.
+                           The upper Pareto diagram displays the error rates, both relative and absolute, of the factories as a whole, meaning that
+                           there is no distinction between the manufactured components within each factory. Beneath the 
+                           Pareto diagram, you can select individual factories in order to 
                            have a more detailed look on a component-sharp resolution."
       }),
       br(),
       p(strong("Error on component-sharp resolution")),
       p({
-        "In the tab \"Error on component-sharp resolution\", you can select certain components in order to examine the distribution of 
-                           absolute errors over the selcted time frame."
+        "In the tab \"Error on component-sharp resolution\", certain components can be selected in order to examine the distribution of 
+                           absolute errors over a selected time frame."
       }),
       br(),
       p(strong("Dataset")),
       p({
-        "The tab \"Dataset\" displays a browsable table of the dataset that is used to generate the plots."
+        "The tab \"Dataset\" displays a browsable table of the dataset used to generate the plots."
       })
     ),
 
@@ -79,7 +79,7 @@ ui <- fluidPage(
         ),
         column(
           width = 6,
-          h4("Selction of error type"),
+          h4("Selection of error type"),
           # switch between rel/abs error
           selectInput("error", "Relative/Absolute Error", choices = list("Relative", "Absolute"))
         )
