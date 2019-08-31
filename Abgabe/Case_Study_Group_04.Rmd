@@ -35,7 +35,6 @@ library(shiny)
 The necessary files are imported using the read.delim function. The data from each file is transformed into a tidy dataset by our function tidy_dataset. We get uniform data which allows an easier data manipulation and visualization. 
 
 ```{r tidy_dataset}
-
 tidy_dataset <- function(component_data) {
   
   # Drop the columns that do not interest us.
@@ -45,12 +44,16 @@ tidy_dataset <- function(component_data) {
     # ends_with("Fahrleistung"),
     starts_with("X")
   ))
-  # ID:
+  # Get the ID columns
   for (id_column in colnames(select(component_data, starts_with("ID")))) {
     component_data[[id_column]] <- as.character(component_data[[id_column]])
   }
   
-  # Fehlerhaft
+  # Get the Fehlerhaft columns.
+  # These describe:
+  # 1)whether or not a component was faulty
+  # 2)if yes, when the component broke down and
+  # 3)the distance covered until that point. 
   for (faulty_column in colnames(select(component_data, starts_with("Fehlerhaft")))) {
     if (startsWith(faulty_column, "Fehlerhaft_Datum")) {
       component_data[[faulty_column]] <- as.Date(component_data[[faulty_column]], format = "%Y-%m-%d")
@@ -60,7 +63,8 @@ tidy_dataset <- function(component_data) {
       component_data[[faulty_column]] <- as.logical(component_data[[faulty_column]])
     }
   }
-  # Produktionsatum
+  
+  # Get the Produktionsatum columns
   # If the date is set as an origin date:
   if ("origin" %in% colnames(component_data)) {
     for (production_date_column in colnames(select(component_data, starts_with("Produktionsdatum")))) {
@@ -73,14 +77,17 @@ tidy_dataset <- function(component_data) {
         as.Date(component_data[[production_date_column]], origin = "1970-01-01")
     }
   } else {
+    # If the date was given in a "regular" format:
     for (production_date_column in colnames(select(component_data, starts_with("Produktionsdatum")))) {
       component_data[[production_date_column]] <- as.Date(component_data[[production_date_column]], format = "%Y-%m-%d")
     }
   }
   
-  # Create new clean columns
+  # Create new clean columns from the data gathered
+  
   # These commands are kept separate for readability's sake.
   
+  # ID columns:
   id_cols <- Filter(
     Negate(function(x) is.null(unlist(x))),
     list(
@@ -91,6 +98,7 @@ tidy_dataset <- function(component_data) {
   )
   component_data$id <- as.factor(coalesce(!!!id_cols))
   
+  # Production date columns:
   production_date_cols <- Filter(
     Negate(function(x) is.null(unlist(x))),
     list(
@@ -101,6 +109,7 @@ tidy_dataset <- function(component_data) {
   )
   component_data$production_date <- coalesce(!!!production_date_cols)
   
+  #Faulty date columns:
   faulty_date_cols <- Filter(
     Negate(function(x) is.null(unlist(x))),
     list(
@@ -111,16 +120,7 @@ tidy_dataset <- function(component_data) {
   )
   component_data$faulty_date <- coalesce(!!!faulty_date_cols)
   
-  distance_cols <- Filter(
-    Negate(function(x) is.null(unlist(x))),
-    list(
-      try(component_data$Fehlerhaft_Fahrleistung),
-      try(component_data$Fehlerhaft_Fahrleistung.x),
-      try(component_data$Fehlerhaft_Fahrleistung.y)
-    )
-  )
-  component_data$distance <- coalesce(!!!distance_cols)
-  
+  # faulty columns
   faulty_cols <- Filter(
     Negate(function(x) is.null(unlist(x))),
     list(
@@ -131,16 +131,19 @@ tidy_dataset <- function(component_data) {
   )
   component_data$faulty <- coalesce(!!!faulty_cols)
   
+  # Production year and production week columns
   component_data$production_year <- as.factor(lubridate::year(component_data$production_date))
   component_data$production_week <- lubridate::week(component_data$production_date)
   
-  # Fill the producer and factory column using the id data.
+  # Fill the producer and factory column using the data from the id.
   component_data_clean <- component_data %>%
     separate(id, c("id", "producer", "factory", "count"), "-") %>%
     select(c(
       "id", "producer", "factory", "faulty",
       "production_year", "production_week", "faulty_date"
     ))
+  
+  # Remove the old dataset, since we no longer need it.
   rm(component_data)
   
   component_data_clean$id <- as.factor(component_data_clean$id)
@@ -148,7 +151,6 @@ tidy_dataset <- function(component_data) {
   component_data_clean$factory <- as.numeric(component_data_clean$factory)
   component_data_clean
 }
-
 ```
 
 The data of every component file is stored in a seperate tibble.
