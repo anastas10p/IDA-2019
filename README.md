@@ -1,8 +1,4 @@
 README file for IDA 2019 group 4.
 
-Group members:
-Philipp Herpich,
-Marina Matthaiou,
-Daniel Schewitz,
-Tatjana Stefanie Spanehl,
-Anastasios Tsigkros
+Exploratory data analysis for car parts manufacturing.
+Goal: Determine the factory next up for insepction, using faulty part data.
